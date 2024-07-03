@@ -5,6 +5,7 @@ from openai import OpenAI
 
 from api import getAssetTypes, getAssets, getAsset, getAssetSensorData, getAssetsWithLocation, getDeviceData, getProjects, getProject, getDevicesInProject
 
+
 def get_function_output(function):
     arguments = json.loads(function.arguments)
     match function.name:
@@ -32,7 +33,7 @@ client = OpenAI(api_key='sk-proj-VIa0xmeWs7LG6lyHmleST3BlbkFJLyhuWf28HAXT88QhN25
 
 assistant = client.beta.assistants.create(
     name="TNT Assistant",
-    instructions="You are a helpful assistant that performs tasks user ask you. First, you will identify what action user wants to perform and match it to corresponding function name and description. Then, you will parse user queries and extract relevant parameters in json format. Finally, call the function with the corresponding arguments. You can ask the user to provide any missing parameters required for the function call. \n If you are unsure about user's request, ask for more information; if you are unable to help, gracefully rejecting their request.",
+    instructions="You are a helpful assistant that retrieve information for the user. First, you will identify what information the user wants to get, parse user queries and extract relevant parameters, and match it to corresponding function name and description. Then, call the function with the corresponding arguments. You can ask the user to provide any missing parameters required for the function call. \n If you are unsure about user's request, ask for more information. If you are unable to help, gracefully rejecting their request.",
     model="gpt-3.5-turbo",
     tools=[
         {
@@ -180,7 +181,7 @@ def chatbot(user_input, chat_history):
     for tool_call in tool_calls:
         print(tool_call.function)
         function_output = json.dumps(get_function_output(tool_call.function))
-        print(function_output)
+        # print(function_output)
         tool_outputs.append({"tool_call_id": tool_call.id, "output": function_output})
 
     run = client.beta.threads.runs.submit_tool_outputs(
@@ -202,6 +203,15 @@ def chatbot(user_input, chat_history):
 if __name__ == "__main__":
     gr.ChatInterface(
         chatbot,
-        textbox=gr.Textbox(placeholder="Hi, how can I help you?", scale=7),
-        title="Tag-N-Trac Assistant"
+        title="Tag-N-Trac AI Assistant",
+        chatbot=gr.Chatbot(
+            value=[[None, "Hi, how can I help you?"]],
+            height="70vh",
+            show_copy_button=True,
+            likeable=True,
+            avatar_images=[
+                "https://t3.ftcdn.net/jpg/05/53/79/60/360_F_553796090_XHrE6R9jwmBJUMo9HKl41hyHJ5gqt9oz.jpg",
+                "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg"
+            ]
+        )
     ).launch(share=True)
