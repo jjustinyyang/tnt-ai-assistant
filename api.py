@@ -39,6 +39,7 @@ common_headers = {"Authorization" : idToken,
                   "x-api-key" : xapikey}
 
 
+# api functions
 def getAssetTypes():
     response = requests.get(f"{API_BASE}/v2/asset-types", headers=common_headers)
     if response.status_code / 100 == 2:
@@ -48,8 +49,8 @@ def getAssetTypes():
         print("Get asset types failed")
         return None
     
-def getAssets():
-    response = requests.get(f"{API_BASE}/v2/assets", headers=common_headers)
+def getAssets(query):
+    response = requests.get(f"{API_BASE}/v2/assets"+query, headers=common_headers)
     if response.status_code / 100 == 2:
         data = response.json()
         return data
@@ -84,8 +85,17 @@ def getAssetsWithLocation():
         print("Get assets with location failed")
         return None
 
-def getDeviceData(device_id):
-    response = requests.get(f"{API_BASE}/v2/device/{device_id}/data", headers=common_headers)
+def getDevices(query):
+    response = requests.get(f"{API_BASE}/v2/devices"+query, headers=common_headers)
+    if response.status_code / 100 == 2:
+        data = response.json()
+        return data
+    else: 
+        print("Get devices failed")
+        return None
+    
+def getDeviceData(device_id, query):
+    response = requests.get(f"{API_BASE}/v2/device/{device_id}/data"+query, headers=common_headers)
     if response.status_code / 100 == 2:
         data = response.json()
         return data

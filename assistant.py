@@ -3,7 +3,7 @@ import json
 import gradio as gr
 from openai import OpenAI
 
-from api import getAssetTypes, getAssets, getAsset, getAssetSensorData, getAssetsWithLocation, getDeviceData, getProjects, getProject, getDevicesInProject
+from api import getAssetTypes, getAssets, getAsset, getAssetSensorData, getAssetsWithLocation, getDevices, getDeviceData, getProjects, getProject, getDevicesInProject
 
 
 def get_function_output(function):
@@ -12,21 +12,47 @@ def get_function_output(function):
         case "getAssetTypes":
             return getAssetTypes()
         case "getAssets":
-            return getAssets()
+            page = arguments.get("page", "")
+            limit = arguments.get("limit", "")
+            deviceType = arguments.get("deviceType", "")
+            assetType = arguments.get("assetType", "")
+            project = arguments.get("project", "")
+            q = arguments.get("q", "")
+            startDate = arguments.get("startDate", "")
+            endDate = arguments.get("endDate", "")
+            query = f"?page={page}&limit={limit}&deviceType={deviceType}&assetType={assetType}&project={project}&q={q}&startDate={startDate}&endDate={endDate}"
+            return getAssets(query)
         case "getAsset":
-            return getAsset(arguments["assetId"])
+            assetId = arguments.get("assetId", "")
+            return getAsset(assetId)
         case "getAssetSensorData":
-            return getAssetSensorData(arguments["assetId"])
+            assetId = arguments.get("assetId", "")
+            return getAssetSensorData(assetId)
         case "getAssetsWithLocation":
             return getAssetsWithLocation()
+        case "getDevices":
+            page = arguments.get("page", "")
+            limit = arguments.get("limit", "")
+            deviceType = arguments.get("deviceType", "")
+            provisioned = arguments.get("provisioned", "")
+            project = arguments.get("project", "")
+            q = arguments.get("q", "")
+            query = f"?page={page}&limit={limit}&deviceType={deviceType}&provisioned={provisioned}&project={project}&q={q}"
+            return getDevices(query)
         case "getDeviceData":
-            return getDeviceData(arguments["deviceId"])
+            deviceId = arguments.get("deviceId", "")
+            startDate = arguments.get("startDate", "")
+            endDate = arguments.get("endDate", "")
+            query = f"?start={startDate}&end={endDate}"
+            return getDeviceData(deviceId, query)
         case "getProjects":
             return getProjects()
         case "getProject":
-            return getProject(arguments["projectId"])
+            projectId = arguments.get("projectId", "")
+            return getProject(projectId)
         case "getDevicesInProject":
-            return getDevicesInProject(arguments["projectId"])
+            projectId = arguments.get("projectId", "")
+            return getDevicesInProject(projectId)
 
 
 client = OpenAI(api_key='sk-proj-VIa0xmeWs7LG6lyHmleST3BlbkFJLyhuWf28HAXT88QhN25M', organization='org-qRa4NGJi0VworFbpu3ymwscd')
@@ -48,8 +74,45 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "getAssets",
-                "description": "Get information of assets",
-                "parameters": {"type": "object", "properties": {}, "required": []},
+                "description": "Get information of assets user requested",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "The number of pages displaying to the user",
+                        },
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of rows of assets displaying to the user per page",
+                        },
+                        "deviceType": {
+                            "type": "string",
+                            "description": "The type of device the user filters for: use BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC",
+                        },
+                        "assetType": {
+                            "type": "string",
+                            "description": "The type of asset the user filters for: use UNIT for unit, BOX for box, PALLET for pallet, CONTAINER for container",
+                        },
+                        "project": {
+                            "type": "string",
+                            "description": "The ID of the project which user filters out assets by",
+                        },
+                        "q": {
+                            "type": "string",
+                            "description": "The ID of the asset or ID of the device user search by",
+                        },
+                        "startDate": {
+                            "type": "string",
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets"
+                        },
+                        "endDate": {
+                            "type": "string",
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets"
+                        },
+                    },
+                    "required": [],
+                },
             },
         },
         {
@@ -97,6 +160,43 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
+                "name": "getDevices",
+                "description": "Get information of devices user requested",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "The number of pages displaying to the user",
+                        },
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of rows of assets displaying to the user per page",
+                        },
+                        "deviceType": {
+                            "type": "string",
+                            "description": "The type of device the user filters for: use BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC",
+                        },
+                        "provisioned": {
+                            "type": "string",
+                            "description": "The status of the device: deployed or in stock. Set provisioned to true if deployed, false if in stock",
+                        },
+                        "project": {
+                            "type": "string",
+                            "description": "The ID of the project which user filters out assets by",
+                        },
+                        "q": {
+                            "type": "string",
+                            "description": "The ID of the asset or ID of the device user search by",
+                        },
+                    },
+                    "required": [],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "getDeviceData",
                 "description": "Get data of a device",
                 "parameters": {
@@ -105,7 +205,15 @@ assistant = client.beta.assistants.create(
                         "deviceId": {
                             "type": "string",
                             "description": "The ID of the device",
-                        }
+                        },
+                        "startDate": {
+                            "type": "string",
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data"
+                        },
+                        "endDate": {
+                            "type": "string",
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data"
+                        },
                     },
                     "required": ["deviceId"],
                 },
@@ -181,7 +289,7 @@ def chatbot(user_input, chat_history):
     for tool_call in tool_calls:
         print(tool_call.function)
         function_output = json.dumps(get_function_output(tool_call.function))
-        # print(function_output)
+        print(function_output)
         tool_outputs.append({"tool_call_id": tool_call.id, "output": function_output})
 
     run = client.beta.threads.runs.submit_tool_outputs(
