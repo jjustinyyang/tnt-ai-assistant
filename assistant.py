@@ -3,7 +3,7 @@ import json
 import gradio as gr
 from openai import OpenAI
 
-from api import getAssetTypes, getAssets, getAsset, getAssetSensorData, getAssetsWithLocation, getDevices, getDeviceData, getProjects, getProject, getDevicesInProject
+from api import getAssetTypes, getAssets, getAsset, getAssetSensorData, getAssetsWithLocation, getDevices, getDeviceData, getDeviceEventData, getDeviceLocationData, getDeviceAccelerationData, getProjects, getProject, getDevicesInProject
 
 
 def get_function_output(function):
@@ -21,13 +21,18 @@ def get_function_output(function):
             startDate = arguments.get("startDate", "")
             endDate = arguments.get("endDate", "")
             query = f"?page={page}&limit={limit}&deviceType={deviceType}&assetType={assetType}&project={project}&q={q}&startDate={startDate}&endDate={endDate}"
+            print(query)
             return getAssets(query)
         case "getAsset":
-            assetId = arguments.get("assetId", "")
-            return getAsset(assetId)
+            assetName = arguments.get("assetName", "")
+            return getAsset(assetName)
         case "getAssetSensorData":
-            assetId = arguments.get("assetId", "")
-            return getAssetSensorData(assetId)
+            assetName = arguments.get("assetName", "")
+            timePeriod = arguments.get("timePeriod", "")
+            binInterval = arguments.get("binInterval", "")
+            query = f"?timePeriod={timePeriod}&binInterval={binInterval}"
+            print(query)
+            return getAssetSensorData(assetName, query)
         case "getAssetsWithLocation":
             return getAssetsWithLocation()
         case "getDevices":
@@ -38,21 +43,41 @@ def get_function_output(function):
             project = arguments.get("project", "")
             q = arguments.get("q", "")
             query = f"?page={page}&limit={limit}&deviceType={deviceType}&provisioned={provisioned}&project={project}&q={q}"
+            print(query)
             return getDevices(query)
         case "getDeviceData":
             deviceId = arguments.get("deviceId", "")
             startDate = arguments.get("startDate", "")
             endDate = arguments.get("endDate", "")
             query = f"?start={startDate}&end={endDate}"
+            print(query)
+            return getDeviceData(deviceId, query)
+        case "getDeviceEventData":
+            deviceId = arguments.get("deviceId", "")
+            t = arguments.get("timePeriod", "")
+            query = f"?t={t}"
+            print(query)
+            return getDeviceData(deviceId, query)
+        case "getDeviceLocationData":
+            deviceId = arguments.get("deviceId", "")
+            t = arguments.get("timePeriod", "")
+            query = f"?t={t}"
+            print(query)
+            return getDeviceData(deviceId, query)
+        case "getDeviceAccelerationData":
+            deviceId = arguments.get("deviceId", "")
+            t = arguments.get("timePeriod", "")
+            query = f"?t={t}"
+            print(query)
             return getDeviceData(deviceId, query)
         case "getProjects":
             return getProjects()
         case "getProject":
-            projectId = arguments.get("projectId", "")
-            return getProject(projectId)
+            projectName = arguments.get("projectName", "")
+            return getProject(projectName)
         case "getDevicesInProject":
-            projectId = arguments.get("projectId", "")
-            return getDevicesInProject(projectId)
+            projectName = arguments.get("projectName", "")
+            return getDevicesInProject(projectName)
 
 
 client = OpenAI(api_key='sk-proj-VIa0xmeWs7LG6lyHmleST3BlbkFJLyhuWf28HAXT88QhN25M', organization='org-qRa4NGJi0VworFbpu3ymwscd')
@@ -96,7 +121,7 @@ assistant = client.beta.assistants.create(
                         },
                         "project": {
                             "type": "string",
-                            "description": "The ID of the project which user filters out assets by",
+                            "description": "The ID of the project which user filters out assets by. User will only search with the name of the project, so look through all the projects and find its ID",
                         },
                         "q": {
                             "type": "string",
@@ -123,12 +148,12 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "assetId": {
+                        "assetName": {
                             "type": "string",
-                            "description": "The ID of the asset",
-                        }
+                            "description": "The name of the asset",
+                        },
                     },
-                    "required": ["assetId"],
+                    "required": ["assetName"],
                 },
             },
         },
@@ -140,12 +165,20 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "assetId": {
+                        "assetName": {
                             "type": "string",
-                            "description": "The ID of the asset",
-                        }
+                            "description": "The name of the asset",
+                        },
+                        "timePeriod": {
+                            "type": "string",
+                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                        },
+                        "binInterval": {
+                            "type": "string",
+                            "description": "The time interval that user wants the data in. e.g. bin interval is 15 if user wants data in every 15 minutes",
+                        },
                     },
-                    "required": ["assetId"],
+                    "required": ["assetName"],
                 },
             },
         },
@@ -198,7 +231,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "getDeviceData",
-                "description": "Get data of a device",
+                "description": "Get general data of a device",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -222,6 +255,69 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
+                "name": "getDeviceEventData",
+                "description": "Get event data of a device",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "deviceId": {
+                            "type": "string",
+                            "description": "The ID of the device",
+                        },
+                        "timePeriod": {
+                            "type": "string",
+                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                        },
+                    },
+                    "required": ["deviceId"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getDeviceLocationData",
+                "description": "Get location data of a device",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "deviceId": {
+                            "type": "string",
+                            "description": "The ID of the device",
+                        },
+                        "timePeriod": {
+                            "type": "string",
+                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                        },
+                    },
+                    "required": ["deviceId"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getDeviceAccelerationData",
+                "description": "Get acceleration data of a device",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "deviceId": {
+                            "type": "string",
+                            "description": "The ID of the device",
+                        },
+                        "timePeriod": {
+                            "type": "string",
+                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                        },
+                    },
+                    "required": ["deviceId"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "getProjects",
                 "description": "Get information of projects",
                 "parameters": {"type": "object", "properties": {}, "required": []},
@@ -235,12 +331,12 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "projectId": {
+                        "projectName": {
                             "type": "string",
-                            "description": "The ID of the project",
+                            "description": "The name of the project",
                         }
                     },
-                    "required": ["projectId"],
+                    "required": ["projectName"],
                 },
             },
         },
@@ -252,17 +348,18 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "projectId": {
+                        "projectName": {
                             "type": "string",
-                            "description": "The ID of the project",
+                            "description": "The name of the project",
                         }
                     },
-                    "required": ["projectId"],
+                    "required": ["projectName"],
                 },
             },
         },
     ],
 )
+
 
 thread = client.beta.threads.create()
 
@@ -270,42 +367,40 @@ def chatbot(user_input, chat_history):
     message = client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_input
     )
-
     run = client.beta.threads.runs.create(
         thread_id=thread.id,
         assistant_id=assistant.id
     )
-
     while run.status not in ["completed", "failed", "requires_action"]:
         time.sleep(1)
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id,
             run_id=run.id
         )
+        print("responding to user input "+run.status)
 
-    tool_calls = run.required_action.submit_tool_outputs.tool_calls
-
-    tool_outputs = []
-    for tool_call in tool_calls:
-        print(tool_call.function)
-        function_output = json.dumps(get_function_output(tool_call.function))
-        print(function_output)
-        tool_outputs.append({"tool_call_id": tool_call.id, "output": function_output})
-
-    run = client.beta.threads.runs.submit_tool_outputs(
-        thread_id=thread.id,
-        run_id=run.id,
-        tool_outputs=tool_outputs
-    )
-
-    while run.status not in ["completed", "failed", "requires_action"]:
-        time.sleep(1)
-        run = client.beta.threads.runs.retrieve(
+    while (run.status == "requires_action"):
+        tool_calls = run.required_action.submit_tool_outputs.tool_calls
+        tool_outputs = []
+        for tool_call in tool_calls:
+            print(tool_call.function)
+            function_output = json.dumps(get_function_output(tool_call.function))
+            print(function_output)
+            tool_outputs.append({"tool_call_id": tool_call.id, "output": function_output})
+        run = client.beta.threads.runs.submit_tool_outputs(
             thread_id=thread.id,
-            run_id=run.id
+            run_id=run.id,
+            tool_outputs=tool_outputs
         )
-    
+        while run.status not in ["completed", "failed", "requires_action"]:
+            time.sleep(1)
+            run = client.beta.threads.runs.retrieve(
+                thread_id=thread.id,
+                run_id=run.id
+            )
+            print("function submission "+run.status)
     messages = list(client.beta.threads.messages.list(thread_id=thread.id))
+    print(messages)
     return messages[0].content[0].text.value
 
 if __name__ == "__main__":

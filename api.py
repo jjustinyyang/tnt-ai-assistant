@@ -58,22 +58,35 @@ def getAssets(query):
         print("Get assets failed")
         return None
     
-def getAsset(device_id):
-    response = requests.get(f"{API_BASE}/v2/assets/{device_id}", headers=common_headers)
-    if response.status_code / 100 == 2:
-        data = response.json()
-        return data
-    else: 
-        print("Get asset failed: "+device_id)
+def getAsset(asset_name):
+    asset = getAssets(f"?q={asset_name}")
+    if asset:
+        asset_id = asset["assets"][0]["id"]
+        print(asset_id)
+        response = requests.get(f"{API_BASE}/v2/assets/{asset_id}", headers=common_headers)
+        if response.status_code / 100 == 2:
+            data = response.json()
+            return data
+        else: 
+            print("Get asset failed: "+asset_name)
+            return None
+    else:
+        print("Get asset id failed: "+asset_name)
         return None
     
-def getAssetSensorData(device_id):
-    response = requests.get(f"{API_BASE}/v2/assets/{device_id}/sensors", headers=common_headers)
-    if response.status_code / 100 == 2:
-        data = response.json()
-        return data
-    else: 
-        print("Get asset sensor data failed: "+device_id)
+def getAssetSensorData(asset_name, query):
+    asset = getAssets(f"?q={asset_name}")
+    if asset:
+        asset_id = asset["assets"][0]["id"]
+        response = requests.get(f"{API_BASE}/v2/assets/{asset_id}/sensors"+query, headers=common_headers)
+        if response.status_code / 100 == 2:
+            data = response.json()
+            return data
+        else: 
+            print("Get asset sensor data failed: "+asset_name)
+            return None
+    else:
+        print("Get asset id failed: "+asset_name)
         return None
     
 def getAssetsWithLocation():
@@ -102,9 +115,37 @@ def getDeviceData(device_id, query):
     else: 
         print("Get device data failed: "+device_id)
         return None
+    
+def getDeviceEventData(device_id, query):
+    response = requests.get(f"{API_BASE}/v2/device/{device_id}/eventData"+query, headers=common_headers)
+    if response.status_code / 100 == 2:
+        data = response.json()
+        return data
+    else: 
+        print("Get device event data failed: "+device_id)
+        return None
 
-def getProjects():
-    response = requests.get(f"{API_BASE}/v2/projects", headers=common_headers)
+def getDeviceLocationData(device_id, query):
+    response = requests.get(f"{API_BASE}/v2/device/{device_id}/locationData"+query, headers=common_headers)
+    if response.status_code / 100 == 2:
+        data = response.json()
+        return data
+    else: 
+        print("Get device location data failed: "+device_id)
+        return None
+
+def getDeviceAccelerationData(device_id, query):
+    response = requests.get(f"{API_BASE}/v2/device/{device_id}/accData"+query, headers=common_headers)
+    if response.status_code / 100 == 2:
+        data = response.json()
+        return data
+    else: 
+        print("Get device acceleration data failed: "+device_id)
+        return None
+
+# still buggy: getProjects might not have queryable objects seems like
+def getProjects(query):
+    response = requests.get(f"{API_BASE}/v2/projects"+query, headers=common_headers)
     if response.status_code / 100 == 2:
         data = response.json()
         return data
@@ -112,20 +153,33 @@ def getProjects():
         print("Get projects failed")
         return None
     
-def getProject(projectId):
-    response = requests.get(f"{API_BASE}/v2/projects/{projectId}", headers=common_headers)
-    if response.status_code / 100 == 2:
-        data = response.json()
-        return data
-    else: 
-        print("Get project failed: "+projectId)
+def getProject(project_name):
+    project = getProjects(f"q={project_name}")
+    if project:
+        project_id = project["projects"][0]["id"]
+        print(project_id)
+        response = requests.get(f"{API_BASE}/v2/projects/{project_id}", headers=common_headers)
+        if response.status_code / 100 == 2:
+            data = response.json()
+            return data
+        else: 
+            print("Get project failed: "+project_name)
+            return None
+    else:
+        print("Get project id failed: "+project_name)
         return None
     
-def getDevicesInProject(projectId):
-    response = requests.get(f"{API_BASE}/v2/projects/{projectId}/devices", headers=common_headers)
-    if response.status_code / 100 == 2:
-        data = response.json()
-        return data
-    else: 
-        print("Get device in project failed: "+projectId)
+def getDevicesInProject(project_name):
+    project = getProjects(f"q={project_name}")
+    if project:
+        project_id = project["projects"][0]["id"]
+        response = requests.get(f"{API_BASE}/v2/projects/{project_id}/devices", headers=common_headers)
+        if response.status_code / 100 == 2:
+            data = response.json()
+            return data
+        else: 
+            print("Get device in project failed: "+project_name)
+            return None
+    else:
+        print("Get project id failed: "+project_name)
         return None
