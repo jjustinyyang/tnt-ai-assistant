@@ -12,11 +12,21 @@ def get_function_output(function):
     id = ""
     query = ""
     match function_name:
+        case "get_alerts":
+            page = arguments.get("page", "1")
+            limit = arguments.get("limit", "50")
+            parameter = arguments.get("parameter", "")
+            condition = arguments.get("condition", "")
+            project = arguments.get("project", "")
+            startDate = arguments.get("startDate", "")
+            endDate = arguments.get("endDate", "")
+            q = arguments.get("q", "")
+            query = f"?page={page}&limit={limit}&parameter={parameter}&condition={condition}&project={project}&startDate={startDate}&endDate={endDate}&q={q}"
         case "get_asset_types":
             pass
         case "get_assets":
-            page = arguments.get("page", "")
-            limit = arguments.get("limit", "")
+            page = arguments.get("page", "1")
+            limit = arguments.get("limit", "50")
             deviceType = arguments.get("deviceType", "")
             assetType = arguments.get("assetType", "")
             project = arguments.get("project", "")
@@ -26,6 +36,16 @@ def get_function_output(function):
             query = f"?page={page}&limit={limit}&deviceType={deviceType}&assetType={assetType}&project={project}&q={q}&startDate={startDate}&endDate={endDate}"
         case "get_asset":
             asset_name = arguments.get("asset_name", "")
+            asset = call_api("get_assets", None, f"?q={asset_name}")
+            if not asset:
+                print("Get asset id failed: "+asset_name)
+                return None
+            id = asset["assets"][0]["id"]
+        case "get_asset_alerts":
+            asset_name = arguments.get("asset_name", "")
+            page = arguments.get("page", "1")
+            limit = arguments.get("limit", "50")
+            query = f"?page={page}&limit={limit}"
             asset = call_api("get_assets", None, f"?q={asset_name}")
             if not asset:
                 print("Get asset id failed: "+asset_name)
@@ -44,8 +64,8 @@ def get_function_output(function):
         case "get_assets_with_location":
             pass
         case "get_devices":
-            page = arguments.get("page", "")
-            limit = arguments.get("limit", "")
+            page = arguments.get("page", "1")
+            limit = arguments.get("limit", "50")
             deviceType = arguments.get("deviceType", "")
             provisioned = arguments.get("provisioned", "")
             project = arguments.get("project", "")
@@ -91,10 +111,66 @@ def get_function_output(function):
 client = OpenAI(api_key='sk-proj-VIa0xmeWs7LG6lyHmleST3BlbkFJLyhuWf28HAXT88QhN25M', organization='org-qRa4NGJi0VworFbpu3ymwscd')
 
 assistant = client.beta.assistants.create(
-    name="TNT Assistant",
-    instructions="You are a helpful assistant that retrieve information for the user. First, you will identify what information the user wants to get, parse user queries and extract relevant parameters, and match it to corresponding function name and description. Then, call the function with the corresponding arguments. You can ask the user to provide any missing parameters required for the function call. \n If you are unsure about user's request, ask for more information. If you are unable to help, gracefully rejecting their request.",
+    name="TNT AI Assistant",
+    instructions = '''
+        You are a helpful assistant that retrieves information for the user.
+
+        You will identify what information the user wants by parsing user queries and extracting relevant parameters, and call the function with the corresponding arguments to get information. You can ask the user to provide any missing parameters required for the function call.
+
+        If you are unsure about the user's request, ask to clarify. If you are unable to help, gracefully reject their request.
+
+        Some rules to follow:
+        - Our server stores timestamps in unix form, convert between unix and human-readable to interact with the user. Always convert unix timestamps received from function calls to human-readable date and time format to display to the user.
+        - Show up to 8 results, indicate to the user if there are more than 8.
+        - The user is in PDT time zone.
+        ''',
     model="gpt-3.5-turbo",
     tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_alerts",
+                "description": "Get information of alerts user requested",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "The number of pages displaying to the user",
+                        },
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of rows of alerts displaying to the user per page",
+                        },
+                        "parameter": {
+                            "type": "string",
+                            "description": ""
+                        },
+                        "condition": {
+                            "type": "string",
+                            "description": ""
+                        },
+                        "project": {
+                            "type": "string",
+                            "description": "The name of the project which user filters out assets by",
+                        },
+                        "q": {
+                            "type": "string",
+                            "description": "The name of the asset or ID of the device user search by",
+                        },
+                        "startDate": {
+                            "type": "string",
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets"
+                        },
+                        "endDate": {
+                            "type": "string",
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets"
+                        },
+                    },
+                    "required": [],
+                },
+            },
+        },
         {
             "type": "function",
             "function": {
@@ -129,11 +205,11 @@ assistant = client.beta.assistants.create(
                         },
                         "project": {
                             "type": "string",
-                            "description": "The ID of the project which user filters out assets by. User will only search with the name of the project, so look through all the projects and find its ID",
+                            "description": "The name of the project which user filters out assets by",
                         },
                         "q": {
                             "type": "string",
-                            "description": "The ID of the asset or ID of the device user search by",
+                            "description": "The name of the asset or ID of the device user search by",
                         },
                         "startDate": {
                             "type": "string",
@@ -159,6 +235,31 @@ assistant = client.beta.assistants.create(
                         "asset_name": {
                             "type": "string",
                             "description": "The name of the asset",
+                        },
+                    },
+                    "required": ["asset_name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_asset_alerts",
+                "description": "Get information of alerts of an asset",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "asset_name": {
+                            "type": "string",
+                            "description": "The name of the asset",
+                        },
+                        "page": {
+                            "type": "string",
+                            "description": "The number of pages displaying to the user",
+                        },
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of rows of asset alerts displaying to the user per page",
                         },
                     },
                     "required": ["asset_name"],
@@ -212,7 +313,7 @@ assistant = client.beta.assistants.create(
                         },
                         "limit": {
                             "type": "string",
-                            "description": "The number of rows of assets displaying to the user per page",
+                            "description": "The number of rows of devices displaying to the user per page",
                         },
                         "deviceType": {
                             "type": "string",

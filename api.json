@@ -1,9 +1,11 @@
 {
     "base_url": "https://api.tagntrac.io",
     "endpoints": {
+        "get_alerts": "/v2/alerts",
         "get_asset_types": "/v2/asset-types",
         "get_assets": "/v2/assets",
         "get_asset": "/v2/assets/{asset_id}",
+        "get_asset_alerts": "/v2/assets/{asset_id}/alerts",
         "get_asset_sensor_data": "/v2/assets/{asset_id}/sensors",
         "get_assets_with_location": "/v2/assets/recent-device-locations",
         "get_devices": "/v2/devices",

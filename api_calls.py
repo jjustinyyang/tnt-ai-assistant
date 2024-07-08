@@ -42,7 +42,7 @@ with open('api.json', 'r') as f:
     api = json.load(f)
 
 def call_api(function_name, id, query):
-    if function_name in ["get_asset", "get_asset_sensor_data"]:
+    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
         endpoint = api["endpoints"][function_name].format(asset_id=id)
     elif function_name in ["get_device_data", "get_device_event_data", "get_device_location_data", "get_device_acceleration_data"]:
         endpoint = api["endpoints"][function_name].format(device_id=id)
