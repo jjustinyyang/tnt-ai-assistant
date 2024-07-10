@@ -9,113 +9,37 @@ from api_calls import call_api
 def get_function_output(function):
     function_name = function.name
     arguments = json.loads(function.arguments)
+
     id = ""
-    query = ""
-    match function_name:
-        case "get_alerts":
-            page = arguments.get("page", "1")
-            limit = arguments.get("limit", "50")
-            parameter = arguments.get("parameter", "")
-            condition = arguments.get("condition", "")
-            project = arguments.get("project", "")
-            startDate = arguments.get("startDate", "")
-            endDate = arguments.get("endDate", "")
-            q = arguments.get("q", "")
-            query = f"?page={page}&limit={limit}&parameter={parameter}&condition={condition}&project={project}&startDate={startDate}&endDate={endDate}&q={q}"
-        case "get_asset_types":
-            pass
-        case "get_assets":
-            page = arguments.get("page", "1")
-            limit = arguments.get("limit", "50")
-            deviceType = arguments.get("deviceType", "")
-            assetType = arguments.get("assetType", "")
-            project = arguments.get("project", "")
-            q = arguments.get("q", "")
-            startDate = arguments.get("startDate", "")
-            endDate = arguments.get("endDate", "")
-            query = f"?page={page}&limit={limit}&deviceType={deviceType}&assetType={assetType}&project={project}&q={q}&startDate={startDate}&endDate={endDate}"
-        case "get_asset":
-            asset_name = arguments.get("asset_name", "")
-            asset = call_api("get_assets", "", f"?q={asset_name}")
-            if not asset:
-                print("Get asset id failed: "+asset_name)
-                return ""
-            id = asset["assets"][0]["id"]
-        case "get_asset_alerts":
-            asset_name = arguments.get("asset_name", "")
-            page = arguments.get("page", "1")
-            limit = arguments.get("limit", "50")
-            query = f"?page={page}&limit={limit}"
-            asset = call_api("get_assets", "", f"?q={asset_name}")
-            if not asset:
-                print("Get asset id failed: "+asset_name)
-                return ""
-            id = asset["assets"][0]["id"]
-        case "get_asset_sensor_data":
-            asset_name = arguments.get("asset_name", "")
-            timePeriod = arguments.get("timePeriod", "")
-            binInterval = arguments.get("binInterval", "")
-            query = f"?timePeriod={timePeriod}&binInterval={binInterval}"
-            asset = call_api("get_assets", "", f"?q={asset_name}")
-            if not asset:
-                print("Get asset id failed: "+asset_name)
-                return ""
-            id = asset["assets"][0]["id"]
-        case "get_assets_with_location":
-            pass
-        case "get_devices":
-            page = arguments.get("page", "1")
-            limit = arguments.get("limit", "50")
-            deviceType = arguments.get("deviceType", "")
-            provisioned = arguments.get("provisioned", "")
-            project = arguments.get("project", "")
-            q = arguments.get("q", "")
-            query = f"?page={page}&limit={limit}&deviceType={deviceType}&provisioned={provisioned}&project={project}&q={q}"
-        case "get_device_data":
-            id = arguments.get("device_id", "")
-            startDate = arguments.get("startDate", "")
-            endDate = arguments.get("endDate", "")
-            query = f"?start={startDate}&end={endDate}"
-        case "get_device_event_data":
-            id = arguments.get("device_id", "")
-            t = arguments.get("timePeriod", "")
-            query = f"?t={t}"
-        case "get_device_location_data":
-            id = arguments.get("device_id", "")
-            t = arguments.get("timePeriod", "")
-            query = f"?t={t}"
-        case "get_device_acceleration_data":
-            id = arguments.get("device_id", "")
-            t = arguments.get("timePeriod", "")
-            query = f"?t={t}"
-        case "get_projects":
-            pass
-        case "get_project":
-            project_name = arguments.get("project_name", "")
-            projects = call_api("get_projects", "", "")
-            if not projects:
-                return ""
-            projects = projects["projects"]
-            for project in projects:
-                if project["projectName"] == project_name or project["shortName"] == project_name:
-                    id = project["id"]
-                    break
-            if not id:
-                print("Get project id failed: "+project_name)
-                return ""
-        case "get_devices_in_project":
-            project_name = arguments.get("project_name", "")
-            projects = call_api("get_projects", "", "")
-            if not projects:
-                return ""
-            projects = projects["projects"]
-            for project in projects:
-                if project["projectName"] == project_name or project["shortName"] == project_name:
-                    id = project["id"]
-                    break
-            if not id:
-                print("Get project id failed: "+project_name)
-                return ""
+    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
+        asset_name = arguments.get("asset_name", "")
+        asset = call_api("get_assets", "", f"?q={asset_name}")
+        if not asset:
+            print("Get asset id failed: "+asset_name)
+            return ""
+        id = asset["assets"][0]["id"]
+    elif function_name in ["get_device_data", "get_device_event_data", "get_device_location_data", "get_device_acceleration_data"]:
+        device_id = arguments.get("device_id", "")
+        id = device_id
+    elif function_name in ["get_project", "get_devices_in_project"]:
+        project_name = arguments.get("project_name", "")
+        projects = call_api("get_projects", "", "")
+        if not projects:
+            return ""
+        projects = projects["projects"]
+        for project in projects:
+            if project["projectName"] == project_name or project["shortName"] == project_name:
+                id = project["id"]
+                break
+        if not id:
+            print("Get project id failed: "+project_name)
+            return ""
+        
+    query = "?"
+    for key, value in arguments.items():
+        if key not in ["asset_name", "device_id", "project_name"]:
+            query += f"{key}={value}&"
+
     print(f"function_name: {function_name}, id: {id}, query: {query}")
     return call_api(function_name, id, query)
 
@@ -360,11 +284,11 @@ assistant = client.beta.assistants.create(
                             "type": "string",
                             "description": "The ID of the device",
                         },
-                        "startDate": {
+                        "start": {
                             "type": "string",
                             "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data"
                         },
-                        "endDate": {
+                        "end": {
                             "type": "string",
                             "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data"
                         },
@@ -385,9 +309,9 @@ assistant = client.beta.assistants.create(
                             "type": "string",
                             "description": "The ID of the device",
                         },
-                        "timePeriod": {
+                        "t": {
                             "type": "string",
-                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                            "description": "time period, the period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
                         },
                     },
                     "required": ["device_id"],
@@ -406,9 +330,9 @@ assistant = client.beta.assistants.create(
                             "type": "string",
                             "description": "The ID of the device",
                         },
-                        "timePeriod": {
+                        "t": {
                             "type": "string",
-                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                            "description": "time period, the period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
                         },
                     },
                     "required": ["device_id"],
@@ -427,9 +351,9 @@ assistant = client.beta.assistants.create(
                             "type": "string",
                             "description": "The ID of the device",
                         },
-                        "timePeriod": {
+                        "t": {
                             "type": "string",
-                            "description": "The period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
+                            "description": "time period, the period of time in minutes user wants the data from. e.g. time period is 1440 if user ask for data within 1 day, 2880 for 2 days etc.",
                         },
                     },
                     "required": ["device_id"],
