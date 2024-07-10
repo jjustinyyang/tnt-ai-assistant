@@ -22,7 +22,7 @@ def login(email, password):
                              headers={"Content-Type" : "application/json", "Origin" : "DOC.API"})
     try:
         if login_response.json()["status"] == "SUCCESS":
-            print("Login successful as ", email)
+            print("Login successful as:", email)
             return (login_response.json()["idToken"], login_response.json()['clientApiKey']['clientId'])
     except Exception as e:
         print(f"Exception: {str(e)}")
@@ -52,6 +52,7 @@ def call_api(function_name, id, query):
         endpoint = api["endpoints"][function_name]
 
     url = f"{api['base_url']}{endpoint}{query}"
+    print(url)
     response = requests.get(url, headers=common_headers)
     
     if response.status_code / 100 == 2:
