@@ -5,7 +5,7 @@ client = OpenAI(api_key=api_key, organization=organization_id)
 
 assistant = client.beta.assistants.create(
     name="TNT AI Assistant",
-    instructions = '''
+    instructions="""
         You are a helpful assistant that retrieves information for the user.
 
         You will identify what information the user wants by parsing user queries and extracting relevant parameters, and call the function with the corresponding arguments to get information. You can ask the user to provide any missing parameters required for the function call.
@@ -16,7 +16,7 @@ assistant = client.beta.assistants.create(
         - Our server stores timestamps in unix form, convert between unix and human-readable to interact with the user. Always convert unix timestamps received from function calls to human-readable date and time format to display to the user.
         - Show up to 8 results, indicate to the user if there are more than 8.
         - The user is in PDT time zone.
-        ''',
+        """,
     model="gpt-3.5-turbo",
     tools=[
         {
@@ -35,14 +35,8 @@ assistant = client.beta.assistants.create(
                             "type": "string",
                             "description": "The number of rows of alerts displaying to the user per page",
                         },
-                        "parameter": {
-                            "type": "string",
-                            "description": ""
-                        },
-                        "condition": {
-                            "type": "string",
-                            "description": ""
-                        },
+                        "parameter": {"type": "string", "description": ""},
+                        "condition": {"type": "string", "description": ""},
                         "project": {
                             "type": "string",
                             "description": "The name of the project which user filters out assets by",
@@ -53,11 +47,11 @@ assistant = client.beta.assistants.create(
                         },
                         "startDate": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets"
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets",
                         },
                         "endDate": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets"
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets",
                         },
                     },
                     "required": [],
@@ -106,11 +100,11 @@ assistant = client.beta.assistants.create(
                         },
                         "startDate": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets"
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets",
                         },
                         "endDate": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets"
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets",
                         },
                     },
                     "required": [],
@@ -243,11 +237,11 @@ assistant = client.beta.assistants.create(
                         },
                         "start": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data"
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data",
                         },
                         "end": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data"
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data",
                         },
                     },
                     "required": ["device_id"],
