@@ -6,7 +6,7 @@ from tnt_api_integration import get_function_output
 
 thread = client.beta.threads.create()
 
-def chatbot(user_input, chat_history):
+def chat(user_input, chat_history):
     client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_input
     )
@@ -45,18 +45,33 @@ def chatbot(user_input, chat_history):
     print(messages)
     return messages[0].content[0].text.value
 
+def clear_chat():
+    # thread = client.beta.threads.create()
+    print("Clearing chat")
+    return [[None, "Hi, how can I help you?"]]
+
 if __name__ == "__main__":
-    gr.ChatInterface(
-        chatbot,
+    chatbot=gr.Chatbot(
+        value=[[None, "Hi, how can I help you?"]],
+        height="70vh",
+        show_copy_button=True,
+        likeable=True,
+        avatar_images=[
+            "https://t3.ftcdn.net/jpg/05/53/79/60/360_F_553796090_XHrE6R9jwmBJUMo9HKl41hyHJ5gqt9oz.jpg",
+            "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg"
+        ],
+    )
+    retry_btn = gr.Button("Retry", size="sm")
+    undo_btn = gr.Button("Undo", size="sm")
+    clear_btn = gr.Button("Clear", size="sm")
+    with gr.ChatInterface(
+        chat,
         title="Tag-N-Trac AI Assistant",
-        chatbot=gr.Chatbot(
-            value=[[None, "Hi, how can I help you?"]],
-            height="70vh",
-            show_copy_button=True,
-            likeable=True,
-            avatar_images=[
-                "https://t3.ftcdn.net/jpg/05/53/79/60/360_F_553796090_XHrE6R9jwmBJUMo9HKl41hyHJ5gqt9oz.jpg",
-                "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg"
-            ]
-        ),
-    ).launch(share=True)
+        chatbot=chatbot,
+        retry_btn=retry_btn,
+        undo_btn=undo_btn,
+        clear_btn=clear_btn,
+        examples=["Show me alerts from my asset _ .", "Where is the device _ located?", "Get me sensor data for my asset _ ."]
+    ) as demo:
+        clear_btn.click(clear_chat, outputs=chatbot)
+    demo.launch(share=True)

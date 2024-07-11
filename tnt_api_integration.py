@@ -72,6 +72,9 @@ def get_function_output(function):
         if not asset:
             print("Get asset id failed: " + asset_name)
             return ""
+        if not asset["assets"]:
+            print("No asset found: " + asset_name)
+            return ""
         id = asset["assets"][0]["id"]
     elif function_name in ["get_device_data", "get_device_event_data", "get_device_location_data", "get_device_acceleration_data"]:
         device_id = arguments.get("device_id", "")
