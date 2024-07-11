@@ -13,6 +13,7 @@
         "get_device_event_data": "/device/{device_id}/eventData",
         "get_device_location_data": "/device/{device_id}/locationData",
         "get_device_acceleration_data": "/device/{device_id}/accData",
+        "get_device_pdf": "/v2/device/{device_id}/pdf",
         "get_projects": "/v2/projects",
         "get_project": "/v2/projects/{project_id}",
         "get_devices_in_project": "/v2/projects/{project_id}/devices"

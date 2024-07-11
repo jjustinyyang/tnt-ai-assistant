@@ -35,13 +35,26 @@ def chat(user_input, chat_history):
             time.sleep(1)
             run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
             print("function submission " + run.status)
-    messages = list(client.beta.threads.messages.list(thread_id=thread.id))
-    print(messages)
-    return messages[0].content[0].text.value
+    messages = client.beta.threads.messages.list(thread_id=thread.id).data
+    ordered = messages[::-1]
+    for message in ordered:
+        print(message.content[0].text.value)
+    return ordered[-1].content[0].text.value
 
 
-def clear_chat():
-    # thread = client.beta.threads.create()
+def undo():
+    messages = client.beta.threads.messages.list(thread_id=thread.id).data
+    for message in messages:
+        client.beta.threads.messages.delete(
+            message_id=message.id, thread_id=thread.id,
+        )
+        if message.role == "user":
+            break
+
+def clear():
+    global thread
+    client.beta.threads.delete(thread_id=thread.id)
+    thread = client.beta.threads.create()
     return [[None, "Hi, how can I help you?"]]
 
 
@@ -56,14 +69,13 @@ if __name__ == "__main__":
             "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg",
         ],
     )
-    retry_btn = gr.Button("Retry", size="sm")
     undo_btn = gr.Button("Undo", size="sm")
     clear_btn = gr.Button("Clear", size="sm")
     with gr.ChatInterface(
         chat,
         title="Tag-N-Trac AI Assistant",
         chatbot=chatbot,
-        retry_btn=retry_btn,
+        retry_btn=None,
         undo_btn=undo_btn,
         clear_btn=clear_btn,
         examples=[
@@ -72,5 +84,6 @@ if __name__ == "__main__":
             "Get me sensor data for my asset _ .",
         ],
     ) as demo:
-        clear_btn.click(clear_chat, outputs=chatbot)
+        undo_btn.click(undo)
+        clear_btn.click(clear, outputs=chatbot)
     demo.launch(share=True)

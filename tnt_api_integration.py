@@ -120,10 +120,14 @@ def get_function_output(function):
             print("Get project id failed: " + project_name)
             return ""
 
-    query = "?"
+    query = ""
     for key, value in arguments.items():
         if key not in ["asset_name", "device_id", "project_name"]:
-            query += f"{key}={value}&"
+            if not query:
+                query += "?"
+            else:
+                query += "&"
+            query += f"{key}={value}"
 
     print(f"function_name: {function_name}, id: {id}, query: {query}")
     return call_api(function_name, id, query)
