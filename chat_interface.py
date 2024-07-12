@@ -57,6 +57,14 @@ def clear():
     thread = client.beta.threads.create()
     return [[None, "Hi, how can I help you?"]]
 
+# def download_pdf():
+#     return download("get_device_pdf", "868617060032986", "?start=&end=&dataType=")
+
+def enable_button(chatbot):
+    if chatbot == [] or chatbot == [[None, "Hi, how can I help you?"]]:
+        return gr.Button(interactive=False), gr.Button(interactive=False)
+    else:
+        return gr.Button(interactive=True), gr.Button(interactive=True)
 
 if __name__ == "__main__":
     chatbot = gr.Chatbot(
@@ -69,8 +77,8 @@ if __name__ == "__main__":
             "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg",
         ],
     )
-    undo_btn = gr.Button("Undo", size="sm")
-    clear_btn = gr.Button("Clear", size="sm")
+    undo_btn = gr.Button("Undo", size="sm", interactive=False)
+    clear_btn = gr.Button("Clear", size="sm", interactive=False)
     with gr.ChatInterface(
         chat,
         title="Tag-N-Trac AI Assistant",
@@ -84,6 +92,9 @@ if __name__ == "__main__":
             "Get me sensor data for my asset _ .",
         ],
     ) as demo:
+        pdf_btn = gr.Button("Download PDF", size="sm", interactive=False)
         undo_btn.click(undo)
         clear_btn.click(clear, outputs=chatbot)
+        # pdf_btn.click(download_pdf)
+        chatbot.change(enable_button, chatbot, [undo_btn, clear_btn])
     demo.launch(share=True)

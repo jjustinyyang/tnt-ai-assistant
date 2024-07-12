@@ -52,6 +52,30 @@ common_headers = {
     "x-api-key": xapikey,
 }
 
+# def download(function_name, id, query):
+#     if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
+#         endpoint = api["endpoints"][function_name].format(asset_id=id)
+#     elif function_name in [
+#         "get_device_data",
+#         "get_device_event_data",
+#         "get_device_location_data",
+#         "get_device_acceleration_data",
+#         "get_device_pdf",
+#     ]:
+#         endpoint = api["endpoints"][function_name].format(device_id=id)
+#     elif function_name in ["get_project", "get_devices_in_project"]:
+#         endpoint = api["endpoints"][function_name].format(project_id=id)
+#     else:
+#         endpoint = api["endpoints"][function_name]
+
+#     url = f"{api['base_url']}{endpoint}{query}"
+#     print(url)
+#     response = requests.get(url, headers=common_headers)
+#     if response.status_code == 200:
+#         with open('downloaded_file.pdf', 'wb') as file:
+#             file.write(response.content)
+#         print('PDF downloaded successfully!')
+
 
 def call_api(function_name, id, query):
     if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
@@ -123,10 +147,7 @@ def get_function_output(function):
     query = ""
     for key, value in arguments.items():
         if key not in ["asset_name", "device_id", "project_name"]:
-            if not query:
-                query += "?"
-            else:
-                query += "&"
+            query += "?" if not query else "&"
             query += f"{key}={value}"
 
     print(f"function_name: {function_name}, id: {id}, query: {query}")

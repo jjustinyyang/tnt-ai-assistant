@@ -3,6 +3,12 @@ from config import api_key, organization_id
 
 client = OpenAI(api_key=api_key, organization=organization_id)
 
+# temp script for deleting past assistants
+# my_assistants = client.beta.assistants.list()
+# for assistant in my_assistants.data:
+#     print("Deleting assistant: " + assistant.id)
+#     client.beta.assistants.delete(assistant.id)
+
 assistant = client.beta.assistants.create(
     name="TNT AI Assistant",
     instructions="""
