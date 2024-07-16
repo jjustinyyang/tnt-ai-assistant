@@ -320,6 +320,35 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
+                "name": "get_device_pdf",
+                "description": "Get information of a device in PDF format",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "device_id": {
+                            "type": "string",
+                            "description": "The ID of the device",
+                        },
+                        "start": {
+                            "type": "string",
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data",
+                        },
+                        "end": {
+                            "type": "string",
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data",
+                        },
+                        "dataType": {
+                            "type": "string",
+                            "description": "The type of data user wants to retrieve",
+                        },
+                    },
+                    "required": ["device_id"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "get_projects",
                 "description": "Get information of projects",
                 "parameters": {"type": "object", "properties": {}, "required": []},
