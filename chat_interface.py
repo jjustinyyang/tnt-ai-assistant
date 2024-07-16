@@ -63,10 +63,11 @@ def get_assistant_response(user_input, chat_history):
     ordered = messages[::-1]
     for message in ordered:
         print(message.content[0].text.value)
+    # chat_history.append([user_input["text"], None])
     # new_query = False
     # for message in ordered:
     #     if new_query:
-    #         chat_history.append({"role": "assistant", "content": message.content[0].text.value})
+    #         chat_history.append([None, message.content[0].text.value])
     #         continue
     #     elif message.content[0].text.value == user_input["text"]:
     #         new_query = True
@@ -74,13 +75,6 @@ def get_assistant_response(user_input, chat_history):
     chat_history.append([user_input["text"], assistant_response])
     print(chat_history)
     return {"text": "", "files": []}, chat_history, download_btn
-
-
-# def download_pdf(device):
-#     device_id = device["device_id"]
-#     query = device["query"]
-#     download("get_device_pdf", device_id, query)
-#     return gr.DownloadButton(value="temp.pdf")
 
 
 if __name__ == "__main__":
@@ -121,7 +115,7 @@ if __name__ == "__main__":
             ],
         )
         download_btn = gr.DownloadButton(
-            label="Download PDF", value="device_info.pdf", size="sm", visible=False
+            label="Download PDF", value="./device_info.pdf", size="sm", visible=False
         )
         user_input = gr.MultimodalTextbox(show_label=False)
         with gr.Row():

@@ -4,10 +4,10 @@ from config import api_key, organization_id
 client = OpenAI(api_key=api_key, organization=organization_id)
 
 # temp script for deleting past assistants
-# my_assistants = client.beta.assistants.list()
-# for assistant in my_assistants.data:
-#     print("Deleting assistant: " + assistant.id)
-#     client.beta.assistants.delete(assistant.id)
+my_assistants = client.beta.assistants.list()
+for assistant in my_assistants.data:
+    print("Deleting assistant: " + assistant.id)
+    client.beta.assistants.delete(assistant.id)
 
 assistant = client.beta.assistants.create(
     name="TNT AI Assistant",
@@ -21,7 +21,7 @@ assistant = client.beta.assistants.create(
         Some rules to follow:
         - Our server stores timestamps in unix form, convert between unix and human-readable to interact with the user. Always convert unix timestamps received from function calls to human-readable date and time format to display to the user.
         - Show up to 8 results, indicate to the user if there are more than 8.
-        - The user is in PDT time zone.
+        - Create tables for tabular data and respond to the user in markdown format.
         """,
     model="gpt-3.5-turbo",
     tools=[
