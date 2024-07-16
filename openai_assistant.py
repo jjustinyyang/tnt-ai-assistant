@@ -21,7 +21,7 @@ assistant = client.beta.assistants.create(
         Some rules to follow:
         - Our server stores timestamps in unix form, convert between unix and human-readable to interact with the user. Always convert unix timestamps received from function calls to human-readable date and time format to display to the user.
         - Show up to 8 results, indicate to the user if there are more than 8.
-        - Create tables for tabular data and respond to the user in markdown format.
+        - If function outputs a string, always response to the user in markdown format, and create tables for tabular data. If function outputs an image, solely display the image to the user.
         """,
     model="gpt-3.5-turbo",
     tools=[

@@ -19,7 +19,7 @@ def download_device_pdf(function):
 
 
 def get_assistant_response(user_input, chat_history):
-    download_btn = gr.DownloadButton(visible=False)
+    enable_download = False
 
     client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_input["text"]
@@ -56,8 +56,8 @@ def get_assistant_response(user_input, chat_history):
             time.sleep(1)
             run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
             print("function submission " + run.status)
-        if enable_download:
-            download_btn = gr.DownloadButton(visible=True)
+
+    download_btn = gr.DownloadButton(visible=enable_download)
 
     messages = client.beta.threads.messages.list(thread_id=thread.id).data
     ordered = messages[::-1]
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         download_btn = gr.DownloadButton(
             label="Download PDF", value="./device_info.pdf", size="sm", visible=False
         )
-        user_input = gr.MultimodalTextbox(show_label=False)
+        user_input = gr.MultimodalTextbox(show_label=False, autofocus=True)
         with gr.Row():
             undo_btn = gr.Button("Undo", size="sm", interactive=False)
             clear_btn = gr.Button("Clear", size="sm", interactive=False)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
             outputs=[user_input, chatbot, download_btn],
         )
 
-        chatbot.change(enable_button, chatbot, [undo_btn, clear_btn])
+        chatbot.change(enable_button, chatbot, [undo_btn, clear_btn], scroll_to_output=True)
         # download_btn.click(download_pdf, inputs=download_btn)
         undo_btn.click(undo_prev, inputs=chatbot, outputs=[user_input, chatbot])
         clear_btn.click(clear_chat, outputs=chatbot)
