@@ -1,9 +1,9 @@
-from openai import OpenAI
 from config import api_key, organization_id
+from openai import OpenAI
 
 client = OpenAI(api_key=api_key, organization=organization_id)
 
-# temp script for deleting past assistants
+# script for deleting past assistants
 my_assistants = client.beta.assistants.list()
 for assistant in my_assistants.data:
     print("Deleting assistant: " + assistant.id)
@@ -44,59 +44,6 @@ assistant = client.beta.assistants.create(
                         },
                         "parameter": {"type": "string", "description": ""},
                         "condition": {"type": "string", "description": ""},
-                        "project": {
-                            "type": "string",
-                            "description": "The name of the project which user filters out assets by",
-                        },
-                        "q": {
-                            "type": "string",
-                            "description": "The name of the asset or ID of the device user search by",
-                        },
-                        "startDate": {
-                            "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets",
-                        },
-                        "endDate": {
-                            "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets",
-                        },
-                    },
-                    "required": [],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_asset_types",
-                "description": "Get information of asset types",
-                "parameters": {"type": "object", "properties": {}, "required": []},
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_assets",
-                "description": "Get information of assets user requested",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "page": {
-                            "type": "string",
-                            "description": "The number of pages displaying to the user",
-                        },
-                        "limit": {
-                            "type": "string",
-                            "description": "The number of rows of assets displaying to the user per page",
-                        },
-                        "deviceType": {
-                            "type": "string",
-                            "description": "The type of device the user filters for: use BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC",
-                        },
-                        "assetType": {
-                            "type": "string",
-                            "description": "The type of asset the user filters for: use UNIT for unit, BOX for box, PALLET for pallet, CONTAINER for container",
-                        },
                         "project": {
                             "type": "string",
                             "description": "The name of the project which user filters out assets by",
@@ -188,16 +135,8 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_assets_with_location",
-                "description": "Get information of assets with their locations",
-                "parameters": {"type": "object", "properties": {}, "required": []},
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_devices",
-                "description": "Get information of devices user requested",
+                "name": "get_assets",
+                "description": "Get information of assets user requested",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -207,27 +146,43 @@ assistant = client.beta.assistants.create(
                         },
                         "limit": {
                             "type": "string",
-                            "description": "The number of rows of devices displaying to the user per page",
+                            "description": "The number of rows of assets displaying to the user per page",
                         },
                         "deviceType": {
                             "type": "string",
                             "description": "The type of device the user filters for: use BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC",
                         },
-                        "provisioned": {
+                        "assetType": {
                             "type": "string",
-                            "description": "The status of the device: deployed or in stock. Set provisioned to true if deployed, false if in stock",
+                            "description": "The type of asset the user filters for: use UNIT for unit, BOX for box, PALLET for pallet, CONTAINER for container",
                         },
                         "project": {
                             "type": "string",
-                            "description": "The ID of the project which user filters out assets by",
+                            "description": "The name of the project which user filters out assets by",
                         },
                         "q": {
                             "type": "string",
-                            "description": "The ID of the asset or ID of the device user search by",
+                            "description": "The name of the asset or ID of the device user search by",
+                        },
+                        "startDate": {
+                            "type": "string",
+                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets",
+                        },
+                        "endDate": {
+                            "type": "string",
+                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets",
                         },
                     },
                     "required": [],
                 },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_assets_with_location",
+                "description": "Get information of assets with their locations",
+                "parameters": {"type": "object", "properties": {}, "required": []},
             },
         },
         {
@@ -350,25 +305,37 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_projects",
-                "description": "Get information of projects",
-                "parameters": {"type": "object", "properties": {}, "required": []},
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_project",
-                "description": "Get information of a project",
+                "name": "get_devices",
+                "description": "Get information of devices user requested",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "project_name": {
+                        "page": {
                             "type": "string",
-                            "description": "The name of the project",
-                        }
+                            "description": "The number of pages displaying to the user",
+                        },
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of rows of devices displaying to the user per page",
+                        },
+                        "deviceType": {
+                            "type": "string",
+                            "description": "The type of device the user filters for: use BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC",
+                        },
+                        "provisioned": {
+                            "type": "string",
+                            "description": "The status of the device: deployed or in stock. Set provisioned to true if deployed, false if in stock",
+                        },
+                        "project": {
+                            "type": "string",
+                            "description": "The ID of the project which user filters out assets by",
+                        },
+                        "q": {
+                            "type": "string",
+                            "description": "The ID of the asset or ID of the device user search by",
+                        },
                     },
-                    "required": ["project_name"],
+                    "required": [],
                 },
             },
         },
@@ -392,6 +359,31 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
+                "name": "get_project",
+                "description": "Get information of a project",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project_name": {
+                            "type": "string",
+                            "description": "The name of the project",
+                        }
+                    },
+                    "required": ["project_name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_projects",
+                "description": "Get information of projects",
+                "parameters": {"type": "object", "properties": {}, "required": []},
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "get_excursions",
                 "description": "Provide a link to view the excursion of an asset",
                 "parameters": {
@@ -406,7 +398,6 @@ assistant = client.beta.assistants.create(
                 },
             },
         },
-
         {
             "type": "function",
             "function": {

@@ -1,5 +1,5 @@
-import time
 import json
+import time
 import gradio as gr
 from openai_assistant import client, assistant
 from tnt_api_integration import get_function_output
@@ -100,9 +100,7 @@ if __name__ == "__main__":
                 "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg",
             ],
         )
-        download_btn = gr.DownloadButton(
-            label="Download PDF", size="sm", visible=False
-        )
+        download_btn = gr.DownloadButton(label="Download PDF", size="sm", visible=False)
         user_input = gr.MultimodalTextbox(show_label=False, autofocus=True)
         with gr.Row():
             undo_btn = gr.Button("Undo", size="sm", interactive=False)

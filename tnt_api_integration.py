@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
-import requests
 import json
+import requests
+from datetime import datetime, timezone
 
 
 with open("api.json", "r") as f:
@@ -133,7 +133,13 @@ def handle_query(function):
     arguments = json.loads(function.arguments)
 
     id = None
-    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data", "get_excursions", "get_temp_graph"]:
+    if function_name in [
+        "get_asset",
+        "get_asset_alerts",
+        "get_asset_sensor_data",
+        "get_excursions",
+        "get_temp_graph",
+    ]:
         asset_name = arguments.get("asset_name", None)
         if asset_name:
             id = get_asset_id_by_name(asset_name)

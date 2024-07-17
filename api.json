@@ -2,20 +2,19 @@
     "base_url": "https://api.tagntrac.io",
     "endpoints": {
         "get_alerts": "/v2/alerts",
-        "get_asset_types": "/v2/asset-types",
-        "get_assets": "/v2/assets",
         "get_asset": "/v2/assets/{asset_id}",
         "get_asset_alerts": "/v2/assets/{asset_id}/alerts",
         "get_asset_sensor_data": "/v2/assets/{asset_id}/sensors",
+        "get_assets": "/v2/assets",
         "get_assets_with_location": "/v2/assets/recent-device-locations",
-        "get_devices": "/v2/devices",
         "get_device_data": "/v2/device/{device_id}/data",
         "get_device_event_data": "/device/{device_id}/eventData",
         "get_device_location_data": "/device/{device_id}/locationData",
         "get_device_acceleration_data": "/device/{device_id}/accData",
         "get_device_pdf": "/v2/device/{device_id}/pdf",
-        "get_projects": "/v2/projects",
+        "get_devices": "/v2/devices",
+        "get_devices_in_project": "/v2/projects/{project_id}/devices",
         "get_project": "/v2/projects/{project_id}",
-        "get_devices_in_project": "/v2/projects/{project_id}/devices"
+        "get_projects": "/v2/projects"
     }
 }
