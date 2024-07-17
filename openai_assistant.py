@@ -1,14 +1,18 @@
+# Importing necessary configurations and OpenAI library
 from config import api_key, organization_id
 from openai import OpenAI
 
+# Initializing OpenAI client with provided API key and organization ID
 client = OpenAI(api_key=api_key, organization=organization_id)
 
-# script for deleting past assistants
+# Script to delete past assistants
 my_assistants = client.beta.assistants.list()
+# Loop through each assistant and delete it
 for assistant in my_assistants.data:
     print("Deleting assistant: " + assistant.id)
     client.beta.assistants.delete(assistant.id)
 
+# Create a new assistant with specified name, instructions, model, and tools
 assistant = client.beta.assistants.create(
     name="TNT AI Assistant",
     instructions="""
