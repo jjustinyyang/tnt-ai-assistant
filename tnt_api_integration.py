@@ -53,6 +53,10 @@ common_headers = {
 }
 
 
+def get_view_link(asset_id):
+    return f"https://app.tagntrac.io/assets/{asset_id}"
+
+
 def download(response):
     with open("device_info.pdf", "wb") as file:
         file.write(response.content)
@@ -129,7 +133,7 @@ def handle_query(function):
     arguments = json.loads(function.arguments)
 
     id = None
-    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
+    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data", "get_excursions", "get_temp_graph"]:
         asset_name = arguments.get("asset_name", None)
         if asset_name:
             id = get_asset_id_by_name(asset_name)
@@ -168,4 +172,9 @@ def get_function_output(function):
     function_name = function.name
     id, query = handle_query(function)
     print(f"function_name: {function_name}, id: {id}, query: {query}")
+    if function_name in ["get_excursions", "get_temp_graph"]:
+        if id:
+            return get_view_link(id)
+        else:
+            return None
     return call_tnt_api(function_name, id, query)

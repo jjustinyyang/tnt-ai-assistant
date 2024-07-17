@@ -89,10 +89,10 @@ if __name__ == "__main__":
             return gr.Button(interactive=True), gr.Button(interactive=True)
 
     with gr.Blocks() as demo:
-        title = gr.Markdown("# Tag-N-Trac AI Assistant")
+        title = gr.Markdown("## Tag-N-Trac AI Assistant")
         chatbot = gr.Chatbot(
             value=[[None, "Hi, how can I help you?"]],
-            height="60vh",
+            height="59vh",
             show_copy_button=True,
             likeable=True,
             avatar_images=[

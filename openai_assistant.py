@@ -389,5 +389,40 @@ assistant = client.beta.assistants.create(
                 },
             },
         },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_excursions",
+                "description": "Provide a link to view the excursion of an asset",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "asset_name": {
+                            "type": "string",
+                            "description": "The name of the asset",
+                        }
+                    },
+                    "required": ["asset_name"],
+                },
+            },
+        },
+
+        {
+            "type": "function",
+            "function": {
+                "name": "get_temp_graph",
+                "description": "Provide a link to view the temperature graph of an asset",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "asset_name": {
+                            "type": "string",
+                            "description": "The name of the asset",
+                        }
+                    },
+                    "required": ["asset_name"],
+                },
+            },
+        },
     ],
 )
