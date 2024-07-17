@@ -43,7 +43,7 @@ def get_assistant_response(user_input, chat_history):
             run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
             print("function submission " + run.status)
 
-    download_btn = gr.DownloadButton(visible=show_download_btn)
+    download_btn = gr.DownloadButton(value="device_info.pdf", visible=show_download_btn)
 
     messages = client.beta.threads.messages.list(thread_id=thread.id).data
     ordered = messages[::-1]
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             ],
         )
         download_btn = gr.DownloadButton(
-            label="Download PDF", value="./device_info.pdf", size="sm", visible=False
+            label="Download PDF", size="sm", visible=False
         )
         user_input = gr.MultimodalTextbox(show_label=False, autofocus=True)
         with gr.Row():
