@@ -2,24 +2,13 @@ import time
 import json
 import gradio as gr
 from openai_assistant import client, assistant
-from tnt_api_integration import get_function_output, download
+from tnt_api_integration import get_function_output
 
 thread = client.beta.threads.create()
 
 
-def download_device_pdf(function):
-    arguments = json.loads(function.arguments)
-    device_id = arguments.get("device_id", "")
-    query = ""
-    for key, value in arguments.items():
-        if key in ["start", "end", "dataType"]:
-            query += "?" if not query else "&"
-            query += f"{key}={value}"
-    return download("get_device_pdf", device_id, query)
-
-
 def get_assistant_response(user_input, chat_history):
-    enable_download = False
+    show_download_btn = False
 
     client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_input["text"]
@@ -36,15 +25,12 @@ def get_assistant_response(user_input, chat_history):
         tool_outputs = []
         for tool_call in tool_calls:
             print(tool_call.function)
-            if tool_call.function.name in [
-                "get_device_data",
-                "get_device_event_data",
-                "get_device_location_data",
-                "get_device_acceleration_data",
-                "get_device_pdf",
-            ]:
-                enable_download = download_device_pdf(tool_call.function)
-            function_output = json.dumps(get_function_output(tool_call.function))
+            if tool_call.function.name == "get_device_pdf":
+                show_download_btn, function_output = get_function_output(
+                    tool_call.function
+                )
+            else:
+                function_output = json.dumps(get_function_output(tool_call.function))
             print(function_output)
             tool_outputs.append(
                 {"tool_call_id": tool_call.id, "output": function_output}
@@ -57,7 +43,7 @@ def get_assistant_response(user_input, chat_history):
             run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
             print("function submission " + run.status)
 
-    download_btn = gr.DownloadButton(visible=enable_download)
+    download_btn = gr.DownloadButton(visible=show_download_btn)
 
     messages = client.beta.threads.messages.list(thread_id=thread.id).data
     ordered = messages[::-1]
@@ -96,7 +82,7 @@ if __name__ == "__main__":
         thread = client.beta.threads.create()
         return [[None, "Hi, how can I help you?"]]
 
-    def enable_button(chatbot):
+    def enable_buttons(chatbot):
         if chatbot == [] or chatbot == [[None, "Hi, how can I help you?"]]:
             return gr.Button(interactive=False), gr.Button(interactive=False)
         else:
@@ -136,8 +122,9 @@ if __name__ == "__main__":
             outputs=[user_input, chatbot, download_btn],
         )
 
-        chatbot.change(enable_button, chatbot, [undo_btn, clear_btn], scroll_to_output=True)
-        # download_btn.click(download_pdf, inputs=download_btn)
+        chatbot.change(
+            enable_buttons, chatbot, [undo_btn, clear_btn], scroll_to_output=True
+        )
         undo_btn.click(undo_prev, inputs=chatbot, outputs=[user_input, chatbot])
         clear_btn.click(clear_chat, outputs=chatbot)
-    demo.launch(share=True)
+    demo.launch()

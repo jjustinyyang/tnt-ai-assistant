@@ -53,32 +53,33 @@ common_headers = {
 }
 
 
-def download(function_name, id, query):
-    endpoint = api["endpoints"][function_name].format(device_id=id)
-    url = f"{api['base_url']}{endpoint}{query}"
-    print(url)
-    response = requests.get(url, headers=common_headers)
-    if response.status_code / 100 == 2:
-        with open("device_info.pdf", "wb") as file:
-            file.write(response.content)
-        print("PDF downloaded successfully!")
-        return True
-    else:
-        print(f"{function_name} failed with status code {response.status_code}")
-        return False
+def download(response):
+    with open("device_info.pdf", "wb") as file:
+        file.write(response.content)
+    print("PDF downloaded successfully!")
 
 
 def call_tnt_api(function_name, id, query):
     if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
+        if not id:
+            print("Get function argument failed: asset id")
+            return None
         endpoint = api["endpoints"][function_name].format(asset_id=id)
     elif function_name in [
         "get_device_data",
         "get_device_event_data",
         "get_device_location_data",
         "get_device_acceleration_data",
+        "get_device_pdf",
     ]:
+        if not id:
+            print("Get function argument failed: device id")
+            return None
         endpoint = api["endpoints"][function_name].format(device_id=id)
     elif function_name in ["get_project", "get_devices_in_project"]:
+        if not id:
+            print("Get function argument failed: project id")
+            return None
         endpoint = api["endpoints"][function_name].format(project_id=id)
     else:
         endpoint = api["endpoints"][function_name]
@@ -88,52 +89,72 @@ def call_tnt_api(function_name, id, query):
     response = requests.get(url, headers=common_headers)
 
     if response.status_code / 100 == 2:
-        data = response.json()
-        return data
+        if function_name == "get_device_pdf":
+            download(response)
+            return True, "Report PDF generated successfully, ready to be downloaded."
+        return response.json()
     else:
         print(f"{function_name} failed with status code {response.status_code}")
+        if function_name == "get_device_pdf":
+            return (
+                False,
+                "Report PDF generation failed, no files available to be downloaded.",
+            )
         return None
 
 
-def handle_query(function):
-    function_name = function.name
-    arguments = json.loads(function.arguments)
+def get_asset_id_by_name(asset_name):
+    asset = call_tnt_api("get_assets", None, f"?q={asset_name}")
+    if asset and asset["assets"] and asset["assets"][0]:
+        return asset["assets"][0]["id"]
+    else:
+        return None
 
-    id = ""
-    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
-        asset_name = arguments.get("asset_name", "")
-        asset = call_tnt_api("get_assets", "", f"?q={asset_name}")
-        if not asset:
-            print("Get asset id failed: " + asset_name)
-            return ""
-        if not asset["assets"]:
-            print("No asset found: " + asset_name)
-            return ""
-        id = asset["assets"][0]["id"]
-    elif function_name in [
-        "get_device_data",
-        "get_device_event_data",
-        "get_device_location_data",
-        "get_device_acceleration_data",
-    ]:
-        device_id = arguments.get("device_id", "")
-        id = device_id
-    elif function_name in ["get_project", "get_devices_in_project"]:
-        project_name = arguments.get("project_name", "")
-        projects = call_tnt_api("get_projects", "", "")
-        if not projects:
-            return ""
+
+def get_project_id_by_name(project_name):
+    projects = call_tnt_api("get_projects", None, "")
+    if projects and projects["projects"]:
         projects = projects["projects"]
         for project in projects:
             if (
                 project["projectName"] == project_name
                 or project["shortName"] == project_name
             ):
-                id = project["id"]
-                break
+                return project["id"]
+    return None
+
+
+def handle_query(function):
+    function_name = function.name
+    arguments = json.loads(function.arguments)
+
+    id = None
+    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
+        asset_name = arguments.get("asset_name", None)
+        if asset_name:
+            id = get_asset_id_by_name(asset_name)
+            if not id:
+                print("Get asset id failed: " + asset_name)
+        else:
+            print("Get function argument failed: asset name")
+    elif function_name in [
+        "get_device_data",
+        "get_device_event_data",
+        "get_device_location_data",
+        "get_device_acceleration_data",
+        "get_device_pdf",
+    ]:
+        id = arguments.get("device_id", None)
         if not id:
-            print("Get project id failed: " + project_name)
-            return ""
+            print("Get function argument failed: device id")
+    elif function_name in ["get_project", "get_devices_in_project"]:
+        project_name = arguments.get("project_name", None)
+        if project_name:
+            id = get_project_id_by_name(project_name)
+            if not id:
+                print("Get project id failed: " + project_name)
+        else:
+            print("Get function argument failed: project name")
 
     query = ""
     for key, value in arguments.items():
@@ -147,5 +168,4 @@ def get_function_output(function):
     function_name = function.name
     id, query = handle_query(function)
     print(f"function_name: {function_name}, id: {id}, query: {query}")
-    api_output = call_tnt_api(function_name, id, query)
-    return api_output
+    return call_tnt_api(function_name, id, query)
