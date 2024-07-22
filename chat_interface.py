@@ -44,7 +44,7 @@ def get_assistant_response(user_input, chat_history):
         # Process each tool call
         for tool_call in tool_calls:
             print(tool_call.function)
-            if tool_call.function.name == "get_device_pdf":
+            if tool_call.function.name == "get_report_pdf":
                 show_download_btn, function_output = get_function_output(
                     tool_call.function
                 )
@@ -65,7 +65,7 @@ def get_assistant_response(user_input, chat_history):
             print("function submission " + run.status)
 
     # Create a download button if a PDF is available
-    download_btn = gr.DownloadButton(value="device_info.pdf", visible=show_download_btn)
+    download_btn = gr.DownloadButton(value="report.pdf", visible=show_download_btn)
 
     # Retrieve the list of messages from the thread and reverse the order
     messages = client.beta.threads.messages.list(thread_id=thread.id).data
