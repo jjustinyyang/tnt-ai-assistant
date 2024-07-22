@@ -99,7 +99,7 @@ if __name__ == "__main__":
             )
             if message.role == "user":
                 break
-        return {"text": chat_history[-1][0], "files": []}, chat_history[:-1]
+        return chat_history[:-1], {"text": chat_history[-1][0], "files": []}, gr.DownloadButton(visible=False)
 
     def clear_chat():
         """
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         global thread
         client.beta.threads.delete(thread_id=thread.id)
         thread = client.beta.threads.create()
-        return [[None, "Hi, how can I help you?"]]
+        return [[None, "Hi, how can I help you?"]], gr.DownloadButton(visible=False)
 
     def enable_buttons(chatbot):
         """
@@ -165,6 +165,6 @@ if __name__ == "__main__":
         chatbot.change(
             enable_buttons, chatbot, [undo_btn, clear_btn], scroll_to_output=True
         )
-        undo_btn.click(undo_prev, inputs=chatbot, outputs=[user_input, chatbot])
-        clear_btn.click(clear_chat, outputs=chatbot)
+        undo_btn.click(undo_prev, inputs=chatbot, outputs=[chatbot, user_input, download_btn])
+        clear_btn.click(clear_chat, outputs=[chatbot, download_btn])
     demo.launch()
