@@ -167,4 +167,4 @@ if __name__ == "__main__":
         )
         undo_btn.click(undo_prev, inputs=chatbot, outputs=[chatbot, user_input, download_btn])
         clear_btn.click(clear_chat, outputs=[chatbot, download_btn])
-    demo.launch()
+    demo.launch(share=True)
