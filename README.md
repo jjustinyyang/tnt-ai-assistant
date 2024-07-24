@@ -51,7 +51,7 @@ We welcome contributions to enhance this project. If you wish to contribute, ple
 5. Create a new Pull Request.
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
+
 
 ## Contact
-For any inquiries or issues, please reach out to [your email] or create an issue in the GitHub repository.
+For any inquiries or issues, please reach out to Tag-N-Trac or [justin.yang@tagntrac.com] or create an issue in the GitHub repository.
