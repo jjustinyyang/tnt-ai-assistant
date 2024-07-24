@@ -2,7 +2,7 @@ import json
 import time
 import gradio as gr
 from openai_assistant import client, assistant
-from tnt_api_integration import get_function_output
+from tnt_api_integration import login, get_function_output
 
 # Create a new thread for the assistant
 thread = client.beta.threads.create()
@@ -137,7 +137,7 @@ if __name__ == "__main__":
             likeable=True,
             avatar_images=[
                 "images/user_avatar.jpg",
-                "images/assistant_avatar.jpg",
+                "images/assistant_avatar.png",
             ],
         )
         download_btn = gr.DownloadButton(label="Download PDF", size="sm", visible=False)
@@ -166,4 +166,4 @@ if __name__ == "__main__":
         )
         undo_btn.click(undo_prev, inputs=chatbot, outputs=[chatbot, user_input, download_btn])
         clear_btn.click(clear_chat, outputs=[chatbot, download_btn])
-    demo.launch(share=True)
+    demo.launch(share=True, auth=login, auth_message="Login to Tag-N-Trac", favicon_path="images/favicon.png")

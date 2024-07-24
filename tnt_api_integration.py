@@ -6,18 +6,23 @@ from datetime import datetime, timezone
 with open("api.json", "r") as f:
     api = json.load(f)
 
-# Placeholder variables for user credentials
-id = "username"
-pwd = "password"
 
-def prompt():
-    """Prompt user for username, password, and file name for device id list."""
-    # id = input("Enter username: ")
-    # pwd = input("Enter password: ")
-    # Placeholder credentials for testing
-    id = "justin.yang@tagntrac.com"
-    pwd = "Chenglin0312."
-    return id, pwd
+common_headers = {}
+
+def set_common_headers(idToken, xapikey):
+    """
+    Set common headers for API requests.
+
+    Args:
+    - idToken: The ID token for authentication.
+    - xapikey: The client API key.
+    """
+    global common_headers
+    common_headers = {
+        "Authorization": idToken,
+        "Origin": f"{api['base_url']}",
+        "x-api-key": xapikey,
+    }
 
 def login(email, password):
     """
@@ -40,25 +45,16 @@ def login(email, password):
     try:
         if login_response.json()["status"] == "SUCCESS":
             print("Login successful as:", email)
-            return (
+            set_common_headers(
                 login_response.json()["idToken"],
                 login_response.json()["clientApiKey"]["clientId"],
             )
+            return True
     except Exception as e:
         print(f"Exception: {str(e)}")
     print(f"Login failed: {login_response.text}")
-    return (None, None)
+    return False
 
-# Capture user input for login
-id, pwd = prompt()
-# Perform login
-idToken, xapikey = login(id, pwd)
-# Set common headers for API requests
-common_headers = {
-    "Authorization": idToken,
-    "Origin": f"{api['base_url']}",
-    "x-api-key": xapikey,
-}
 
 def get_view_link(asset_id):
     """
