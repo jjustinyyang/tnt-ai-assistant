@@ -18,8 +18,8 @@ This project aims to integrate an AI assistant into a device tracking system to 
 ## Installation
 1. Clone the repository:
 ```
-git clone https://github.com/yourusername/ai-assistant-device-tracking.git
-cd ai-assistant-device-tracking
+git clone https://github.com/jjustinyyang/tnt-ai-assistant.git
+cd tnt-ai-assistant
 ```
 2. Set up a virtual environment and activate it:
 ```
