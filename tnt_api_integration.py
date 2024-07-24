@@ -105,7 +105,7 @@ def call_tnt_api(function_name, id, query):
         "get_device_event_data",
         "get_device_location_data",
         "get_device_acceleration_data",
-        "get_report_pdf",
+        "get_device_pdf_report",
     ]:
         if not id:
             print("Get function argument failed: device id")
@@ -116,6 +116,8 @@ def call_tnt_api(function_name, id, query):
             print("Get function argument failed: project id")
             return None
         endpoint = api["endpoints"][function_name].format(project_id=id)
+    elif function_name == "get_asset_pdf_report":
+        endpoint = api["endpoints"][function_name].format(assetName=id)
     else:
         endpoint = api["endpoints"][function_name]
 
@@ -124,35 +126,19 @@ def call_tnt_api(function_name, id, query):
     response = requests.get(url, headers=common_headers)
 
     if response.status_code // 100 == 2:
-        if function_name == "get_report_pdf":
+        if function_name in ["get_asset_pdf_report", "get_device_pdf_report"]:
             download(response)
             return True, "Report PDF generated successfully, ready to be downloaded."
         return response.json()
     else:
         print(f"{function_name} failed with status code {response.status_code}")
-        if function_name == "get_report_pdf":
+        if function_name in ["get_asset_pdf_report", "get_device_pdf_report"]:
             return (
                 False,
                 "Report PDF generation failed, no files available to be downloaded.",
             )
         return None
     
-def get_device_id_of_asset(asset_name):
-    """
-    Get the device ID of the asset by asset name.
-
-    Args:
-    - asset_name: The name of the asset.
-
-    Returns:
-    - The device ID or None if not found.
-    """
-    asset = call_tnt_api("get_assets", None, f"?q={asset_name}")
-    if asset and asset["assets"] and asset["assets"][0]:
-        return asset["assets"][0]["deviceId"]
-    else:
-        return None
-
 def get_asset_id_by_name(asset_name):
     """
     Get the asset ID by asset name.
@@ -208,7 +194,6 @@ def handle_query(function):
         "get_asset",
         "get_asset_alerts",
         "get_asset_sensor_data",
-        "get_excursions",
         "get_temp_graph",
     ]:
         asset_name = arguments.get("asset_name", None)
@@ -218,19 +203,12 @@ def handle_query(function):
                 print("Get asset id failed: " + asset_name)
         else:
             print("Get function argument failed: asset name")
-    elif function_name == "get_report_pdf":
-        asset_name = arguments.get("asset_name", None)
-        if asset_name:
-            id = get_device_id_of_asset(asset_name)
-            if not id:
-                print("Get device id failed: " + asset_name)
-        else:
-            print("Get function argument failed: asset name")
     elif function_name in [
         "get_device_data",
         "get_device_event_data",
         "get_device_location_data",
         "get_device_acceleration_data",
+        "get_device_pdf_report",
     ]:
         id = arguments.get("device_id", None)
         if not id:
@@ -243,6 +221,10 @@ def handle_query(function):
                 print("Get project id failed: " + project_name)
         else:
             print("Get function argument failed: project name")
+    elif function_name == "get_asset_pdf_report":
+        id = arguments.get("asset_name", None)
+        if not id:
+            print("Get function argument failed: asset name")
 
     query = ""
     for key, value in arguments.items():

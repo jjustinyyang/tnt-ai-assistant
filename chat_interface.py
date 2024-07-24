@@ -44,7 +44,7 @@ def get_assistant_response(user_input, chat_history):
         # Process each tool call
         for tool_call in tool_calls:
             print(tool_call.function)
-            if tool_call.function.name == "get_report_pdf":
+            if tool_call.function.name in ["get_asset_pdf_report", "get_device_pdf_report"]:
                 show_download_btn, function_output = get_function_output(
                     tool_call.function
                 )
@@ -76,7 +76,6 @@ def get_assistant_response(user_input, chat_history):
     # Append the assistant's response to the chat history
     assistant_response = ordered[-1].content[0].text.value
     chat_history.append([user_input["text"], assistant_response])
-    print(chat_history)
     
     return {"text": "", "files": []}, chat_history, download_btn
 
@@ -137,8 +136,8 @@ if __name__ == "__main__":
             show_copy_button=True,
             likeable=True,
             avatar_images=[
-                "https://t3.ftcdn.net/jpg/05/53/79/60/360_F_553796090_XHrE6R9jwmBJUMo9HKl41hyHJ5gqt9oz.jpg",
-                "https://mms.businesswire.com/media/20220125006080/en/1338748/22/Tag-N-Trac.jpg",
+                "images/user_avatar.jpg",
+                "images/assistant_avatar.jpg",
             ],
         )
         download_btn = gr.DownloadButton(label="Download PDF", size="sm", visible=False)

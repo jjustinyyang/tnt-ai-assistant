@@ -26,8 +26,8 @@ assistant = client.beta.assistants.create(
         - If the function outputs nothing (None or null), respond to the user with a message indicating that no data was found.
         - Always respond to the user in markdown format, create tables for tabular data.
         - If the user asks for a report, indicate to the user to use the download button if the report is generated and ready to be downloaded.
-        - Always convert unix timestamps to human-readable time before displaying time information the user.
-        - Display up to 5 most recent results, indicate to the user if there are more results not displayed.
+        - Always convert Epoch and Unix timestamps to human-readable date and time before displaying the user.
+        - Display up to 5 most recent results unless user specify to display more, indicate to the user if there are more results not displayed.
         """,
     model="gpt-3.5-turbo",
     tools=[
@@ -35,18 +35,10 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_alerts",
-                "description": "Return alerts based on user-defined parameters.",
+                "description": "Return alerts/excursions based on user-defined parameters.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "parameter": {
-                            "type": "string", 
-                            "description": "The parameter to filter alerts by.",
-                        },
-                        "condition": {
-                            "type": "string", 
-                            "description": "The condition to filter alerts by.",
-                        },
                         "project": {
                             "type": "string",
                             "description": "The name of the project which user filters out assets by. E.g. User inputs: 'I want to see alerts from project X.', then project = 'X'.",
@@ -57,11 +49,11 @@ assistant = client.beta.assistants.create(
                         },
                         "startDate": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to filter assets",
                         },
                         "endDate": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to filter assets",
                         },
                     },
                     "required": [],
@@ -89,7 +81,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_asset_alerts",
-                "description": "Return alerts of an asset given the asset name.",
+                "description": "Return alerts/excursions of an asset given the asset name.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -153,11 +145,11 @@ assistant = client.beta.assistants.create(
                         },
                         "startDate": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to filter assets",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to filter assets",
                         },
                         "endDate": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to filter assets",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to filter assets",
                         },
                     },
                     "required": [],
@@ -186,11 +178,11 @@ assistant = client.beta.assistants.create(
                         },
                         "start": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to retrieve device data",
                         },
                         "end": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to retrieve device data",
                         },
                     },
                     "required": ["device_id"],
@@ -334,26 +326,22 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_report_pdf",
-                "description": "Generate a report of an asset in PDF format",
+                "name": "get_asset_pdf_report",
+                "description": "Generate a PDF report for a specific asset identified by its name. E.g. User inputs: 'Generate a report for asset X.', then asset_name = 'X'; User inputs: 'Generate a report for X.', then asset_name = 'X'.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "asset_name": {
                             "type": "string",
-                            "description": "The name of the asset. E.g. User inputs: 'Generate a report for asset X.', then asset_name = 'X'.",
+                            "description": "The name of the asset for which the PDF report is requested. E.g. User inputs: 'Generate a report for asset X.', then asset_name = 'X'.",
                         },
-                        "start": {
+                        "orgId": {
                             "type": "string",
-                            "description": "The start date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) from which to retrieve device data",
+                            "description": "ID of the organization the Asset belongs to.",
                         },
-                        "end": {
+                        "ts": {
                             "type": "string",
-                            "description": "The end date and time (in ISO 8601 format, i.e. YYYY-MM-DD for date, delimiter that separates the date from the time, hh:mm:ss.sss for time, and time zone) until which to retrieve device data",
-                        },
-                        "dataType": {
-                            "type": "string",
-                            "description": "The type of data user wants to retrieve.",
+                            "description": "This timestamp, measured in milliseconds, determines the closest report generated to it that will be returned.",
                         },
                     },
                     "required": ["asset_name"],
@@ -363,20 +351,45 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_excursions",
-                "description": "Provide a link to view the excursion of an asset",
+                "name": "get_device_pdf_report",
+                "description": "Generate a PDF report for a specific device identified by its ID. E.g. User inputs: 'Generate a report for device X.', then device_id = 'X'.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "asset_name": {
+                        "device_id": {
                             "type": "string",
-                            "description": "The name of the asset. E.g. User inputs: 'Show me excursion for asset X.', then asset_name = 'X'.",
-                        }
+                            "description": "The ID of the device for which the PDF report is requested. E.g. User inputs: 'Generate a report for device X.', then device_id = 'X'.",
+                        },
+                        "start": {
+                            "type": "string",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to generate the report",
+                        },
+                        "end": {
+                            "type": "string",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to generate the report",
+                        },
                     },
-                    "required": ["asset_name"],
+                    "required": ["device_id"],
                 },
             },
         },
+        # {
+        #     "type": "function",
+        #     "function": {
+        #         "name": "get_excursions",
+        #         "description": "Provide a link to view the excursion of an asset",
+        #         "parameters": {
+        #             "type": "object",
+        #             "properties": {
+        #                 "asset_name": {
+        #                     "type": "string",
+        #                     "description": "The name of the asset. E.g. User inputs: 'Show me excursion for asset X.', then asset_name = 'X'.",
+        #                 }
+        #             },
+        #             "required": ["asset_name"],
+        #         },
+        #     },
+        # },
         {
             "type": "function",
             "function": {

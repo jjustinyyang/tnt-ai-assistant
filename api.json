@@ -1,7 +1,7 @@
 {
     "base_url": "https://api.tagntrac.io",
     "endpoints": {
-        "get_alerts": "/v2/alerts",
+        "get_alerts": "/v2/alerts?page=1&limit=50&parameter=&condition=&project=&startDate=&endDate=&q=",
         "get_asset": "/v2/assets/{asset_id}",
         "get_asset_alerts": "/v2/assets/{asset_id}/alerts",
         "get_asset_sensor_data": "/v2/assets/{asset_id}/sensors",
@@ -15,6 +15,7 @@
         "get_devices_in_project": "/v2/projects/{project_id}/devices",
         "get_project": "/v2/projects/{project_id}",
         "get_projects": "/v2/projects",
-        "get_report_pdf": "/v2/device/{device_id}/pdf"
+        "get_asset_pdf_report": "/v2/asset/{assetName}/pdf",
+        "get_device_pdf_report": "/v2/device/{device_id}/pdf"
     }
 }
