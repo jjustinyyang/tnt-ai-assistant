@@ -36,18 +36,18 @@ pip install -r requirements.txt
 ```
 python app.py
 ```
-2. Open your web browser and go to the local server address (e.g., http://localhost:7860) to interact with the assistant.
+2. Open your web browser and go to the local server address (e.g., `http://localhost:7860`) to interact with the assistant.
 
 ## Configuration
-Ensure that your API keys and other sensitive information are stored securely. You can use environment variables or a .env file to manage these configurations.
+Ensure that your API keys and other sensitive information are stored securely. You can use environment variables or a `.env` file to manage these configurations.
 
 ## Contribution
 We welcome contributions to enhance this project. If you wish to contribute, please follow these steps:
 
 1. Fork the repository.
-2. Create a new branch (git checkout -b feature-branch).
-3. Make your changes and commit them (git commit -am 'Add new feature').
-4. Push to the branch (git push origin feature-branch).
+2. Create a new branch `git checkout -b new-branch`.
+3. Make your changes and commit them `git commit -am 'add changes _ '`.
+4. Push to the branch `git push origin new-branch`.
 5. Create a new Pull Request.
 
 ## License
