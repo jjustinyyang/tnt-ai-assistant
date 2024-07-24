@@ -54,4 +54,4 @@ We welcome contributions to enhance this project. If you wish to contribute, ple
 
 
 ## Contact
-For any inquiries or issues, please reach out to Tag-N-Trac or [justin.yang@tagntrac.com] or create an issue in the GitHub repository.
+For any inquiries or issues, please reach out to Tag-N-Trac or justin.yang@tagntrac.com or create an issue in the GitHub repository.
