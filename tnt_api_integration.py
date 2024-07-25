@@ -74,10 +74,20 @@ def download(response):
 
     Args:
     - response: The response object containing the PDF content.
+
+    Returns:
+    - A tuple containing the success status and a message.
     """
-    with open("report.pdf", "wb") as file:
-        file.write(response.content)
-    print("PDF downloaded successfully!")
+    if response and response.status_code // 100 == 2:
+        with open("report.pdf", "wb") as file:
+            file.write(response.content)
+        print("PDF downloaded successfully!")
+        return True, "Report PDF generated successfully, ready to be downloaded."
+    else:
+        return (
+            False,
+            "Report PDF generation failed, no files available to be downloaded.",
+        )
 
 def call_tnt_api(function_name, id, query):
     """
@@ -92,7 +102,7 @@ def call_tnt_api(function_name, id, query):
     - The API response or None if the call fails.
     """
     if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
-        if not id:
+        if id is None:
             print("Get function argument failed: asset id")
             return None
         endpoint = api["endpoints"][function_name].format(asset_id=id)
@@ -103,12 +113,12 @@ def call_tnt_api(function_name, id, query):
         "get_device_acceleration_data",
         "get_device_pdf_report",
     ]:
-        if not id:
+        if id is None:
             print("Get function argument failed: device id")
             return None
         endpoint = api["endpoints"][function_name].format(device_id=id)
     elif function_name in ["get_project", "get_devices_in_project"]:
-        if not id:
+        if id is None:
             print("Get function argument failed: project id")
             return None
         endpoint = api["endpoints"][function_name].format(project_id=id)
@@ -122,17 +132,9 @@ def call_tnt_api(function_name, id, query):
     response = requests.get(url, headers=common_headers)
 
     if response.status_code // 100 == 2:
-        if function_name in ["get_asset_pdf_report", "get_device_pdf_report"]:
-            download(response)
-            return True, "Report PDF generated successfully, ready to be downloaded."
-        return response.json()
+        return response
     else:
         print(f"{function_name} failed with status code {response.status_code}")
-        if function_name in ["get_asset_pdf_report", "get_device_pdf_report"]:
-            return (
-                False,
-                "Report PDF generation failed, no files available to be downloaded.",
-            )
         return None
     
 def get_asset_id_by_name(asset_name):
@@ -195,7 +197,7 @@ def handle_query(function):
         asset_name = arguments.get("asset_name", None)
         if asset_name:
             id = get_asset_id_by_name(asset_name)
-            if not id:
+            if id is None:
                 print("Get asset id failed: " + asset_name)
         else:
             print("Get function argument failed: asset name")
@@ -207,19 +209,19 @@ def handle_query(function):
         "get_device_pdf_report",
     ]:
         id = arguments.get("device_id", None)
-        if not id:
+        if id is None:
             print("Get function argument failed: device id")
     elif function_name in ["get_project", "get_devices_in_project"]:
         project_name = arguments.get("project_name", None)
         if project_name:
             id = get_project_id_by_name(project_name)
-            if not id:
+            if id is None:
                 print("Get project id failed: " + project_name)
         else:
             print("Get function argument failed: project name")
     elif function_name == "get_asset_pdf_report":
         id = arguments.get("asset_name", None)
-        if not id:
+        if id is None:
             print("Get function argument failed: asset name")
 
     query = ""
@@ -228,6 +230,26 @@ def handle_query(function):
             query += "?" if not query else "&"
             query += f"{key}={value}"
     return id, query
+
+def handle_response(function_name, response):
+    """
+    Handle the API response based on the function name.
+
+    Args:
+    - function_name: The name of the API function.
+    - response: The API response object.
+
+    Returns:
+    - Handled response based on the function name.
+    """
+    if response is None and function_name not in ["get_asset_pdf_report", "get_device_pdf_report"]:
+        return None
+    match function_name:
+        case "get_asset_pdf_report" | "get_device_pdf_report":
+            return download(response)
+        # specific cases require response handling here
+        case _:
+            return response.json()
 
 def get_function_output(function):
     """
@@ -247,4 +269,5 @@ def get_function_output(function):
             return get_view_link(id)
         else:
             return None
-    return call_tnt_api(function_name, id, query)
+    api_response = call_tnt_api(function_name, id, query)
+    return handle_response(function_name, api_response)
