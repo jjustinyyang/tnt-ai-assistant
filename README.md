@@ -40,6 +40,7 @@ python app.py
 
 ## Configuration
 Ensure that your API keys and other sensitive information are stored securely. You can use environment variables or a `.env` file to manage these configurations.
+- In your `.env` file, set your API key: `OPENAI_API_KEY=your_openai_api_key`.
 
 ## Contribution
 We welcome contributions to enhance this project. If you wish to contribute, please follow these steps:
