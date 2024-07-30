@@ -227,10 +227,15 @@ def handle_query(function):
             print("Get function argument failed: asset name")
 
     query = ""
-    for key, value in arguments.items():
-        if key not in ["asset_name", "device_id", "project_name"]:
-            query += "?" if not query else "&"
-            query += f"{key}={value}"
+    # special case: get_alerts api has to include blank queries
+    if function_name == "get_alerts":
+        query += "?page=1&limit=50&parameter=&condition="
+        query += f"&project={arguments.get("project", "")}&startDate={arguments.get("startDate", "")}&endDate={arguments.get("endDate", "")}&q={arguments.get("q", "")}"
+    else:
+        for key, value in arguments.items():
+            if key not in ["asset_name", "device_id", "project_name"]:
+                query += "?" if not query else "&"
+                query += f"{key}={value}"
     return id, query
 
 def handle_response(function_name, response):
