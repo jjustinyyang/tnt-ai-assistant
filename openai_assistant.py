@@ -2,6 +2,11 @@
 from config import api_key, organization_id
 from openai import OpenAI
 
+from datetime import date
+
+today = date.today()
+print(today)
+
 # Initializing OpenAI client with provided API key and organization ID
 client = OpenAI(api_key=api_key, organization=organization_id)
 
@@ -15,19 +20,22 @@ for assistant in my_assistants.data:
 # Create a new assistant with specified name, instructions, model, and tools
 assistant = client.beta.assistants.create(
     name="TNT AI Assistant",
-    instructions="""
+    instructions=f"""
         You are a helpful assistant that retrieves information for the user.
 
         You will identify what information the user wants by parsing user queries and extracting relevant parameters, and call the function with the corresponding arguments to get information. You can ask the user to provide any missing parameters required for the function call.
 
         If you are unsure about the user's request, ask to clarify. If you are unable to help, gracefully reject their request.
 
-        Some rules to follow:
+        Rules when parsing user queries:
+        - Today is {today}. If the user requests information related to the current date, interpret key phrases such as "Past day," "Yesterday," "Last week," and "Previous month" in the context of today's date.
+
+        Rules when responding to the user:
         - If the function outputs nothing (None or null), respond to the user with a message indicating that no data was found.
         - Always respond to the user in markdown format, create tables for tabular data.
-        - If the user asks for a report, indicate to the user to use the download button if the report is generated and ready to be downloaded.
-        - Always convert Epoch and Unix timestamps to human-readable date and time before displaying the user.
+        - Always convert Epoch and Unix timestamps and ISO 8601 format timestamps to human-readable date and time (24-hour time notation), then offset the hour by -7 to adjust the timezone from UTC to PDT.
         - Display up to 5 most recent results unless user specify to display more, indicate to the user if there are more results not displayed.
+        - If the user asks for a report, indicate to the user to use the download button if the report is generated and ready to be downloaded.
         """,
     model="gpt-3.5-turbo",
     tools=[
@@ -35,7 +43,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_alerts",
-                "description": "Return alerts/excursions based on user-defined parameters.",
+                "description": "Return alerts/excursions based on user-defined parameters. Excursions are alerts that are triggered when a sensor value exceeds a certain threshold (E.g. Temperature, Trip Duration, Lifetime Temperature).",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -49,11 +57,11 @@ assistant = client.beta.assistants.create(
                         },
                         "startDate": {
                             "type": "string",
-                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to filter assets",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to filter assets. E.g. User inputs: 'Show me alerts from the past week.', then set startDate to one week before today.",
                         },
                         "endDate": {
                             "type": "string",
-                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to filter assets",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to filter assets. E.g. User inputs: 'Show me alerts until yesterday.', then set endDate to yesterday.",
                         },
                     },
                     "required": [],
@@ -81,7 +89,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_asset_alerts",
-                "description": "Return alerts/excursions of an asset given the asset name.",
+                "description": "Return alerts/excursions of an asset given the asset name. Excursions are alerts that are triggered when a sensor value exceeds a certain threshold (E.g. Temperature, Trip Duration, Lifetime Temperature).",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -145,11 +153,11 @@ assistant = client.beta.assistants.create(
                         },
                         "startDate": {
                             "type": "string",
-                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to filter assets",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to filter assets. E.g. User inputs: 'Show me assets from the past week.', then set startDate to one week before today.",
                         },
                         "endDate": {
                             "type": "string",
-                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to filter assets",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to filter assets. E.g. User inputs: 'Show me assets until yesterday.', then set endDate to yesterday.",
                         },
                     },
                     "required": [],
@@ -178,11 +186,11 @@ assistant = client.beta.assistants.create(
                         },
                         "start": {
                             "type": "string",
-                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to retrieve device data",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to retrieve device data. E.g. User inputs: 'Get me data from device X from yesterday.', then set start to yesterday.",
                         },
                         "end": {
                             "type": "string",
-                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to retrieve device data",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to retrieve device data. E.g. User inputs: 'Get me data from device X until today.', then set end to today.",
                         },
                     },
                     "required": ["device_id"],
@@ -362,11 +370,11 @@ assistant = client.beta.assistants.create(
                         },
                         "start": {
                             "type": "string",
-                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to generate the report",
+                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to generate the report. E.g. User inputs: 'Generate a report for device X from yesterday.', then set start to yesterday.",
                         },
                         "end": {
                             "type": "string",
-                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to generate the report",
+                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to generate the report. E.g. User inputs: 'Generate a report for device X until today.', then set end to today.",
                         },
                     },
                     "required": ["device_id"],

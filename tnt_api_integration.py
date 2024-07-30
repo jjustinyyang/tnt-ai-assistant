@@ -1,6 +1,5 @@
 import json
 import requests
-from datetime import datetime, timezone
 
 # Load API configuration from a JSON file
 with open("api.json", "r") as f:
@@ -78,7 +77,7 @@ def download(response):
     Returns:
     - A tuple containing the success status and a message.
     """
-    if response and response.status_code // 100 == 2:
+    if response:
         with open("report.pdf", "wb") as file:
             file.write(response.content)
         print("PDF downloaded successfully!")
@@ -132,6 +131,7 @@ def call_tnt_api(function_name, id, query):
     response = requests.get(url, headers=common_headers)
 
     if response.status_code // 100 == 2:
+        print(response.json())
         return response
     else:
         print(f"{function_name} failed with status code {response.status_code}")
@@ -148,6 +148,7 @@ def get_asset_id_by_name(asset_name):
     - The asset ID or None if not found.
     """
     asset = call_tnt_api("get_assets", None, f"?q={asset_name}")
+    asset = asset.json()
     if asset and asset["assets"] and asset["assets"][0]:
         return asset["assets"][0]["id"]
     else:
@@ -164,6 +165,7 @@ def get_project_id_by_name(project_name):
     - The project ID or None if not found.
     """
     projects = call_tnt_api("get_projects", None, "")
+    projects = projects.json()
     if projects and projects["projects"]:
         projects = projects["projects"]
         for project in projects:

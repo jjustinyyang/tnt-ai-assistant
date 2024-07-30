@@ -50,7 +50,6 @@ def get_assistant_response(user_input, chat_history):
                 )
             else:
                 function_output = json.dumps(get_function_output(tool_call.function))
-            print(function_output)
             tool_outputs.append(
                 {"tool_call_id": tool_call.id, "output": function_output}
             )
