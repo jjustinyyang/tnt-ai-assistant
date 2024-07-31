@@ -1,7 +1,6 @@
 # Importing necessary configurations and OpenAI library
 from config import api_key, organization_id
 from openai import OpenAI
-
 from datetime import date
 
 today = date.today()
@@ -29,15 +28,15 @@ assistant = client.beta.assistants.create(
 
         Rules when parsing user queries:
         - Today is {today}. If the user requests information related to the current date, interpret key phrases such as "Past day," "Yesterday," "Last week," and "Previous month" in the context of today's date.
+        - When the user queries for data within a specific date range, both start and end dates need to be intepreted, never have only one of the dates, assume for the other bound if only one date is given by the user. E.g. User inputs: "Show me data since yesterday.", then start date will be yesterday and end date will be assumed to be today inclusive.
 
         Rules when responding to the user:
         - If the function outputs nothing (None or null), respond to the user with a message indicating that no data was found.
         - Always respond to the user in markdown format, create tables for tabular data.
-        - Always convert Epoch and Unix timestamps and ISO 8601 format timestamps to human-readable date and time (24-hour time notation), then offset the hour by -7 to adjust the timezone from UTC to PDT.
-        - Display up to 5 most recent results unless user specify to display more, indicate to the user if there are more results not displayed.
+        - Always convert Unix Epoch timestamps and ISO 8601 format timestamps to human-readable date and time (24-hour time notation), then offset the hour by -7 to adjust the timezone from UTC to PDT.
         - If the user asks for a report, indicate to the user to use the download button if the report is generated and ready to be downloaded.
         """,
-    model="gpt-3.5-turbo",
+    model="gpt-4o-mini",
     tools=[
         {
             "type": "function",
@@ -47,6 +46,10 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of alerts to return. E.g. User inputs: 'Show me 10 alerts.', then limit = 10.",
+                        },
                         "project": {
                             "type": "string",
                             "description": "The name of the project which user filters out assets by. E.g. User inputs: 'I want to see alerts from project X.', then project = 'X'.",
@@ -71,57 +74,15 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_asset",
-                "description": "Return information of an asset given the asset name.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "asset_name": {
-                            "type": "string",
-                            "description": "The name of the asset. E.g. User inputs: 'Tell me about asset X.', then asset_name = 'X'.",
-                        },
-                    },
-                    "required": ["asset_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_asset_alerts",
-                "description": "Return alerts/excursions of an asset given the asset name. Excursions are alerts that are triggered when a sensor value exceeds a certain threshold (E.g. Temperature, Trip Duration, Lifetime Temperature).",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "asset_name": {
-                            "type": "string",
-                            "description": "The name of the asset. E.g. User inputs: 'Show me alerts from my asset X.', then asset_name = 'X'.",
-                        },
-                    },
-                    "required": ["asset_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
                 "name": "get_asset_sensor_data",
-                "description": "Return sensor data of an asset given the asset name.",
+                "description": "Return sensor data of an asset given the asset name. E.g. timestamps, temperature (C), pressure (hPa), and acceleration.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "asset_name": {
                             "type": "string",
                             "description": "The name of the asset. E.g. User inputs: 'Get me sensor data for my asset X.', then asset_name = 'X'.",
-                        },
-                        "timePeriod": {
-                            "type": "string",
-                            "description": "The period of time in minutes user wants the data from. E.g. User inputs: 'Get me sensor data for my asset X in the past day.', then timePeriod = 1440, because 1 day is 1440 minutes; User inputs: 'Get me sensor data for my asset X in the past 2 days.', then timePeriod = 2880, because 2 days is 2880 minutes.",
-                        },
-                        "binInterval": {
-                            "type": "string",
-                            "description": "The time interval in minutes that user wants the data in. E.g. User inputs: 'Get me sensor data for my asset X in the past day in every 15 minutes interval.', then binInterval = 15.",
-                        },
+                        }
                     },
                     "required": ["asset_name"],
                 },
@@ -135,6 +96,10 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of assets to return. E.g. User inputs: 'Show me 10 assets.', then limit = 10.",
+                        },
                         "deviceType": {
                             "type": "string",
                             "description": "The type of device the user filters for: deviceType = BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC. E.g. User inputs: 'Show me all bluetooth devices.', then deviceType = BLE_TAG.",
@@ -167,14 +132,6 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_assets_with_location",
-                "description": "Returns assets along with their location data.",
-                "parameters": {"type": "object", "properties": {}, "required": []},
-            },
-        },
-        {
-            "type": "function",
-            "function": {
                 "name": "get_device_data",
                 "description": "Return device data based on user-defined parameters.",
                 "parameters": {
@@ -200,60 +157,14 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_device_event_data",
-                "description": "Return event data of a device",
+                "name": "get_device_events",
+                "description": "Return events of a device based on user-defined parameters. Events such as movement, open, close, short, medium, and shock.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "device_id": {
                             "type": "string",
-                            "description": "The ID of the device. E.g. User inputs: 'Get me event data from device X.', then device_id = 'X'.",
-                        },
-                        "t": {
-                            "type": "string",
-                            "description": "time period, the period of time in minutes user wants the data from. E.g. User inputs: 'Get me event data from device X in the past day.', then t = 1440, because 1 day is 1440 minutes; User inputs: 'Get me event data from device X in the past 2 days.', then t = 2880, because 2 days is 2880 minutes.",
-                        },
-                    },
-                    "required": ["device_id"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_device_location_data",
-                "description": "Return location data of a device",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "device_id": {
-                            "type": "string",
-                            "description": "The ID of the device. E.g. User inputs: 'Get me location data from device X.', then device_id = 'X'.",
-                        },
-                        "t": {
-                            "type": "string",
-                            "description": "time period, the period of time in minutes user wants the data from. E.g. User inputs: 'Get me location data from device X in the past day.', then t = 1440, because 1 day is 1440 minutes; User inputs: 'Get me location data from device X in the past 2 days.', then t = 2880, because 2 days is 2880 minutes.",
-                        },
-                    },
-                    "required": ["device_id"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_device_acceleration_data",
-                "description": "Return acceleration data of a device",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "device_id": {
-                            "type": "string",
-                            "description": "The ID of the device. E.g. User inputs: 'Get me acceleration data from device X.', then device_id = 'X'.",
-                        },
-                        "t": {
-                            "type": "string",
-                            "description": "time period, the period of time in minutes user wants the data from. E.g. User inputs: 'Get me acceleration data from device X in the past day.', then t = 1440, because 1 day is 1440 minutes; User inputs: 'Get me acceleration data from device X in the past 2 days.', then t = 2880, because 2 days is 2880 minutes.",
+                            "description": "The ID of the device. E.g. User inputs: 'Is there any events happend on device X during the trip?', then device_id = 'X'.",
                         },
                     },
                     "required": ["device_id"],
@@ -268,6 +179,10 @@ assistant = client.beta.assistants.create(
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "limit": {
+                            "type": "string",
+                            "description": "The number of devices to return. E.g. User inputs: 'Show me 10 devices.', then limit = 10.",
+                        },
                         "deviceType": {
                             "type": "string",
                             "description": "The type of device the user filters for: deviceType = BLE_TAG for bluetooth, CATM1_TAG for cellular, NFC_TAG for NFC. E.g. User inputs: 'Show me all bluetooth devices.', then deviceType = BLE_TAG.",
@@ -292,43 +207,14 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_devices_in_project",
-                "description": "Return devices in a project given the project name.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "project_name": {
-                            "type": "string",
-                            "description": "The name of the project. E.g. User inputs: 'Show me devices in project X.', then project_name = 'X'.",
-                        }
-                    },
-                    "required": ["project_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_project",
-                "description": "Return information of a project given the project name.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "project_name": {
-                            "type": "string",
-                            "description": "The name of the project. E.g. User inputs: 'Tell me about project X.', then project_name = 'X'.",
-                        }
-                    },
-                    "required": ["project_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
                 "name": "get_projects",
                 "description": "Return projects based on user-defined parameters.",
-                "parameters": {"type": "object", "properties": {}, "required": []},
+                "parameters": {"type": "object", "properties": {
+                    "limit": {
+                        "type": "string",
+                        "description": "The number of projects to return. E.g. User inputs: 'Show me 10 projects.', then limit = 10.",
+                    }
+                }, "required": []},
             },
         },
         {
@@ -359,56 +245,14 @@ assistant = client.beta.assistants.create(
         {
             "type": "function",
             "function": {
-                "name": "get_device_pdf_report",
-                "description": "Generate a PDF report for a specific device identified by its ID. E.g. User inputs: 'Generate a report for device X.', then device_id = 'X'.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "device_id": {
-                            "type": "string",
-                            "description": "The ID of the device for which the PDF report is requested. E.g. User inputs: 'Generate a report for device X.', then device_id = 'X'.",
-                        },
-                        "start": {
-                            "type": "string",
-                            "description": "The start date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) from which to generate the report. E.g. User inputs: 'Generate a report for device X from yesterday.', then set start to yesterday.",
-                        },
-                        "end": {
-                            "type": "string",
-                            "description": "The end date and time in ISO 8601 format (E.g. 2024-06-22T18:15:48.030Z) until which to generate the report. E.g. User inputs: 'Generate a report for device X until today.', then set end to today.",
-                        },
-                    },
-                    "required": ["device_id"],
-                },
-            },
-        },
-        # {
-        #     "type": "function",
-        #     "function": {
-        #         "name": "get_excursions",
-        #         "description": "Provide a link to view the excursion of an asset",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "asset_name": {
-        #                     "type": "string",
-        #                     "description": "The name of the asset. E.g. User inputs: 'Show me excursion for asset X.', then asset_name = 'X'.",
-        #                 }
-        #             },
-        #             "required": ["asset_name"],
-        #         },
-        #     },
-        # },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_temp_graph",
-                "description": "Provide a link to view the temperature graph of an asset",
+                "name": "get_visuals",
+                "description": "Provide a link to view an asset's temperature, pressure, and acceleration graphs, and location on a map.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "asset_name": {
                             "type": "string",
-                            "description": "The name of the asset. E.g. User inputs: 'Show me temperature graph for asset X.', then asset_name = 'X'.",
+                            "description": "The name of the asset. E.g. User inputs: 'Show me temperature graph for asset X.', then asset_name = 'X'. User inputs: 'Show me the location of asset X.', then asset_name = 'X'.",
                         }
                     },
                     "required": ["asset_name"],

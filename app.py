@@ -32,7 +32,7 @@ def get_assistant_response(user_input, chat_history):
 
     # Wait for the run to complete or fail
     while run.status not in ["completed", "failed", "requires_action"]:
-        time.sleep(1)
+        time.sleep(2)
         run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
         print("responding to user input " + run.status)
     
@@ -59,7 +59,7 @@ def get_assistant_response(user_input, chat_history):
             thread_id=thread.id, run_id=run.id, tool_outputs=tool_outputs
         )
         while run.status not in ["completed", "failed", "requires_action"]:
-            time.sleep(1)
+            time.sleep(2)
             run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
             print("function submission " + run.status)
 
@@ -69,11 +69,11 @@ def get_assistant_response(user_input, chat_history):
     # Retrieve the list of messages from the thread and reverse the order
     messages = client.beta.threads.messages.list(thread_id=thread.id).data
     ordered = messages[::-1]
-    for message in ordered:
-        print(message.content[0].text.value)
+    # for message in ordered:
+    #     print(message.content[0].text.value)
     
     # Append the assistant's response to the chat history
-    assistant_response = ordered[-1].content[0].text.value
+    assistant_response = ordered[-1].content[0].text.value if run.status == "completed" else "I'm sorry, I couldn't process your request. Please try again."
     chat_history.append([user_input["text"], assistant_response])
     
     return {"text": "", "files": []}, chat_history, download_btn
@@ -146,9 +146,8 @@ if __name__ == "__main__":
             clear_btn = gr.Button("Clear", size="sm", interactive=False)
         examples = gr.Examples(
             examples=[
-                {"text": "Show me alerts from my asset _ ."},
-                {"text": "Where is the device _ located?"},
-                {"text": "Get me sensor data for my asset _ ."},
+                {"text": "Show me alerts for the asset IH-0948."},
+                {"text": "Get me sensor data for my asset IH-0948."},
             ],
             inputs=user_input,
         )

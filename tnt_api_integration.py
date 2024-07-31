@@ -1,5 +1,6 @@
 import json
 import requests
+from datetime import datetime, timedelta
 
 # Load API configuration from a JSON file
 with open("api.json", "r") as f:
@@ -100,29 +101,11 @@ def call_tnt_api(function_name, id, query):
     Returns:
     - The API response or None if the call fails.
     """
-    if function_name in ["get_asset", "get_asset_alerts", "get_asset_sensor_data"]:
+    if function_name in ["get_asset_sensor_data", "get_device_data", "get_device_events", "get_asset_pdf_report"]:
         if id is None:
-            print("Get function argument failed: asset id")
+            print(f"{function_name} failed with missing endpoint argument: id")
             return None
-        endpoint = api["endpoints"][function_name].format(asset_id=id)
-    elif function_name in [
-        "get_device_data",
-        "get_device_event_data",
-        "get_device_location_data",
-        "get_device_acceleration_data",
-        "get_device_pdf_report",
-    ]:
-        if id is None:
-            print("Get function argument failed: device id")
-            return None
-        endpoint = api["endpoints"][function_name].format(device_id=id)
-    elif function_name in ["get_project", "get_devices_in_project"]:
-        if id is None:
-            print("Get function argument failed: project id")
-            return None
-        endpoint = api["endpoints"][function_name].format(project_id=id)
-    elif function_name == "get_asset_pdf_report":
-        endpoint = api["endpoints"][function_name].format(assetName=id)
+        endpoint = api["endpoints"][function_name].format(id=id)
     else:
         endpoint = api["endpoints"][function_name]
 
@@ -131,7 +114,7 @@ def call_tnt_api(function_name, id, query):
     response = requests.get(url, headers=common_headers)
 
     if response.status_code // 100 == 2:
-        print(response.json())
+        print(f"{function_name} successful with status code {response.status_code}")
         return response
     else:
         print(f"{function_name} failed with status code {response.status_code}")
@@ -154,28 +137,6 @@ def get_asset_id_by_name(asset_name):
     else:
         return None
 
-def get_project_id_by_name(project_name):
-    """
-    Get the project ID by project name.
-
-    Args:
-    - project_name: The name of the project.
-
-    Returns:
-    - The project ID or None if not found.
-    """
-    projects = call_tnt_api("get_projects", None, "")
-    projects = projects.json()
-    if projects and projects["projects"]:
-        projects = projects["projects"]
-        for project in projects:
-            if (
-                project["projectName"] == project_name
-                or project["shortName"] == project_name
-            ):
-                return project["id"]
-    return None
-
 def handle_query(function):
     """
     Handle the function query to determine the ID and query string.
@@ -191,10 +152,8 @@ def handle_query(function):
 
     id = None
     if function_name in [
-        "get_asset",
-        "get_asset_alerts",
         "get_asset_sensor_data",
-        "get_temp_graph",
+        "get_visuals",
     ]:
         asset_name = arguments.get("asset_name", None)
         if asset_name:
@@ -205,22 +164,11 @@ def handle_query(function):
             print("Get function argument failed: asset name")
     elif function_name in [
         "get_device_data",
-        "get_device_event_data",
-        "get_device_location_data",
-        "get_device_acceleration_data",
-        "get_device_pdf_report",
+        "get_device_events",
     ]:
         id = arguments.get("device_id", None)
         if id is None:
             print("Get function argument failed: device id")
-    elif function_name in ["get_project", "get_devices_in_project"]:
-        project_name = arguments.get("project_name", None)
-        if project_name:
-            id = get_project_id_by_name(project_name)
-            if id is None:
-                print("Get project id failed: " + project_name)
-        else:
-            print("Get function argument failed: project name")
     elif function_name == "get_asset_pdf_report":
         id = arguments.get("asset_name", None)
         if id is None:
@@ -229,8 +177,8 @@ def handle_query(function):
     query = ""
     # special case: get_alerts api has to include blank queries
     if function_name == "get_alerts":
-        query += "?page=1&limit=50&parameter=&condition="
-        query += f"&project={arguments.get("project", "")}&startDate={arguments.get("startDate", "")}&endDate={arguments.get("endDate", "")}&q={arguments.get("q", "")}"
+        query += "?parameter=&condition="
+        query += f"&limit={arguments.get("limit", "")}&project={arguments.get("project", "")}&startDate={arguments.get("startDate", "")}&endDate={arguments.get("endDate", "")}&q={arguments.get("q", "")}"
     else:
         for key, value in arguments.items():
             if key not in ["asset_name", "device_id", "project_name"]:
@@ -238,7 +186,31 @@ def handle_query(function):
                 query += f"{key}={value}"
     return id, query
 
-def handle_response(function_name, response):
+def convert_time(format, time):
+    """
+    Convert the time from epoch or iso format to human-readable format.
+
+    Args:
+    - format: The format to convert the time to.
+    - time: The time to convert.
+
+    Returns:
+    - The converted time.
+    """
+    match format:
+        case "iso":
+            time = datetime.fromisoformat(time.replace("Z", "+00:00"))
+        case "epoch":
+            time = datetime.fromtimestamp(int(time) // 1000)
+        case "other":
+            time = datetime.strptime(time.split('.')[0], "%Y-%m-%d %H:%M:%S")
+        case _:
+            return time
+    offset = timedelta(hours=-7)
+    time = (time + offset).strftime("%Y-%m-%d %H:%M:%S PDT")
+    return time
+
+def handle_response(function_name, api_response):
     """
     Handle the API response based on the function name.
 
@@ -249,14 +221,102 @@ def handle_response(function_name, response):
     Returns:
     - Handled response based on the function name.
     """
-    if response is None and function_name not in ["get_asset_pdf_report", "get_device_pdf_report"]:
+    if function_name == "get_asset_pdf_report":
+        return download(api_response)
+    if api_response is None:
         return None
+    api_response = api_response.json()
+    print(api_response)
+    handled_reponse = []
     match function_name:
-        case "get_asset_pdf_report" | "get_device_pdf_report":
-            return download(response)
         # specific cases require response handling here
+        case "get_alerts":
+            for alert in api_response["response"]:
+                handled_reponse.append(
+                    {
+                        "Asset Name": alert["blegwId"],
+                        "Device ID": alert["deviceId"],
+                        "Condition": alert["value"],
+                        "Triggered At": convert_time("iso", alert["updatedAt"]),
+                    }
+                )
+        case "get_assets":
+            for asset in api_response["assets"]:
+                handled_reponse.append(
+                    {
+                        "Asset": asset["TrackedUnit"]["trackingId"],
+                        "Tracked Unit": asset["TrackedUnit"]["tuType"],
+                        "Device": asset["deviceId"],
+                        "Device Type": asset["Device"]["deviceType"],
+                        "State": asset["state"],
+                        "Last Reported": convert_time("iso", asset["lastReportedAt"]),
+                        "Alerts": asset["alerts"],
+                    }
+                )
+        case "get_asset_sensor_data":
+            for sensor_data in api_response:
+                handled_reponse.append(
+                    {
+                        "Timestamp": convert_time("epoch", sensor_data["timestamp"]),
+                        "Temperature": sensor_data["temperature"],
+                        "Humidity": sensor_data["humidity"],
+                        "Pressure": sensor_data["pressure"],
+                        "Acceleration": {"X": sensor_data["accX"], "Y": sensor_data["accY"], "Z": sensor_data["accZ"]},
+                    }
+                )
+        case "get_devices":
+            for device in api_response["devices"]:
+                handled_reponse.append(
+                    {
+                        "Device ID": device["id"],
+                        "Device Type": device["deviceType"],
+                        "Provisioned Asset": None if device["DeviceInfo"] is None else {"Asset Name": device["DeviceInfo"]["TrackedUnit"]["trackingId"], "Tracking Unit": device["DeviceInfo"]["TrackedUnit"]["tuType"], "Last Reported": convert_time("iso", device["DeviceInfo"]["lastReportedAt"])},
+                    }
+                )
+        case "get_device_data":
+            if api_response["status"] != "SUCCESS":
+                return None
+            for device_data in api_response["response"]:
+                handled_reponse.append(
+                    {
+                        "Timestamp": convert_time("epoch", device_data["ts"]),
+                        "Location": {"Latitude": device_data["lat"], "Longitude": device_data["lng"]},
+                        "Temperature": device_data["tm"],
+                        "Humidity": device_data["h"],
+                        "Pressure": device_data["prs"],
+                        "Acceleration": {"X": device_data["accX"], "Y": device_data["accY"], "Z": device_data["accZ"]},
+                        "Events": device_data["evnts"],
+                    }
+                )
+        case "get_device_events":
+            if api_response["status"] != "SUCCESS":
+                return None
+            for event, values in api_response["events"].items():
+                if event != "timestamp":
+                    time_indices = [index for index, value in enumerate(values) if value]
+                    for index in time_indices:
+                        handled_reponse.append(
+                            {
+                                "Timestamp": convert_time("other", api_response["events"]["timestamp"][index]),
+                                "Event": event,
+                            }
+                        )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
+        case "get_projects":
+            for project in api_response["projects"]:
+                handled_reponse.append(
+                    {
+                        "Project Name": project["projectName"],
+                        "Short Name": project["shortName"],
+                        "Active": project["isActive"],
+                        "Created At": convert_time("iso", project["createdAt"]),
+                        "Updated At": convert_time("iso", project["updatedAt"]),
+                    }
+                )
         case _:
-            return response.json()
+            handled_reponse = api_response
+    print(handled_reponse)
+    return handled_reponse
 
 def get_function_output(function):
     """
@@ -271,7 +331,7 @@ def get_function_output(function):
     function_name = function.name
     id, query = handle_query(function)
     print(f"function_name: {function_name}, id: {id}, query: {query}")
-    if function_name == "get_temp_graph":
+    if function_name == "get_visuals":
         if id:
             return get_view_link(id)
         else:
