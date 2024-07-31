@@ -13,7 +13,7 @@ This project aims to integrate an AI assistant into a device tracking system to 
 ## Technology Stacks 
 - Frontend: Gradio
 - Backend: Python
-- AI Model: OpenAI's GPT-4
+- AI Model: OpenAI's GPT-4o-mini (currently)
 
 ## Installation
 1. Clone the repository:
