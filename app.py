@@ -7,10 +7,11 @@ from tnt_api_integration import login, get_function_output
 # Create a new thread for the assistant
 thread = client.beta.threads.create()
 
+
 def get_assistant_response(user_input, chat_history):
     """
     This function gets the assistant's response to the user's input and updates the chat history.
-    
+
     Args:
     - user_input: A dictionary containing the user's input.
     - chat_history: A list of previous chat messages.
@@ -24,7 +25,7 @@ def get_assistant_response(user_input, chat_history):
     client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_input["text"]
     )
-    
+
     # Run the assistant
     run = client.beta.threads.runs.create(
         thread_id=thread.id, assistant_id=assistant.id
@@ -35,16 +36,19 @@ def get_assistant_response(user_input, chat_history):
         time.sleep(2)
         run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
         print("responding to user input " + run.status)
-    
+
     # Handle required actions
     while run.status == "requires_action":
         tool_calls = run.required_action.submit_tool_outputs.tool_calls
         tool_outputs = []
-        
+
         # Process each tool call
         for tool_call in tool_calls:
             print(tool_call.function)
-            if tool_call.function.name in ["get_asset_pdf_report", "get_device_pdf_report"]:
+            if tool_call.function.name in [
+                "get_asset_pdf_report",
+                "get_device_pdf_report",
+            ]:
                 show_download_btn, function_output = get_function_output(
                     tool_call.function
                 )
@@ -53,7 +57,7 @@ def get_assistant_response(user_input, chat_history):
             tool_outputs.append(
                 {"tool_call_id": tool_call.id, "output": function_output}
             )
-        
+
         # Submit tool outputs and wait for the run to complete or fail
         run = client.beta.threads.runs.submit_tool_outputs(
             thread_id=thread.id, run_id=run.id, tool_outputs=tool_outputs
@@ -71,18 +75,24 @@ def get_assistant_response(user_input, chat_history):
     ordered = messages[::-1]
     # for message in ordered:
     #     print(message.content[0].text.value)
-    
+
     # Append the assistant's response to the chat history
-    assistant_response = ordered[-1].content[0].text.value if run.status == "completed" else "I'm sorry, I couldn't process your request. Please try again."
+    assistant_response = (
+        ordered[-1].content[0].text.value
+        if run.status == "completed"
+        else "I'm sorry, I couldn't process your request. Please try again."
+    )
     chat_history.append([user_input["text"], assistant_response])
-    
+
     return {"text": "", "files": []}, chat_history, download_btn
 
+
 if __name__ == "__main__":
+
     def undo_prev(chat_history):
         """
         This function undoes the previous user input and assistant response.
-        
+
         Args:
         - chat_history: A list of previous chat messages.
 
@@ -97,7 +107,11 @@ if __name__ == "__main__":
             )
             if message.role == "user":
                 break
-        return chat_history[:-1], {"text": chat_history[-1][0], "files": []}, gr.DownloadButton(visible=False)
+        return (
+            chat_history[:-1],
+            {"text": chat_history[-1][0], "files": []},
+            gr.DownloadButton(visible=False),
+        )
 
     def clear_chat():
         """
@@ -162,6 +176,13 @@ if __name__ == "__main__":
         chatbot.change(
             enable_buttons, chatbot, [undo_btn, clear_btn], scroll_to_output=True
         )
-        undo_btn.click(undo_prev, inputs=chatbot, outputs=[chatbot, user_input, download_btn])
+        undo_btn.click(
+            undo_prev, inputs=chatbot, outputs=[chatbot, user_input, download_btn]
+        )
         clear_btn.click(clear_chat, outputs=[chatbot, download_btn])
-    demo.launch(share=True, auth=login, auth_message="Login to Tag-N-Trac", favicon_path="images/favicon.png")
+    demo.launch(
+        share=True,
+        auth=login,
+        auth_message="Login to Tag-N-Trac",
+        favicon_path="images/favicon.png",
+    )
