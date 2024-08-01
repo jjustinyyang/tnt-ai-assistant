@@ -249,7 +249,8 @@ def handle_response(function_name, api_response):
                         "Tracked Unit": asset["TrackedUnit"]["tuType"],
                         "Device": asset["deviceId"],
                         "Device Type": asset["Device"]["deviceType"],
-                        "State": asset["state"],
+                        "Project": asset["Project"]["projectName"],
+                        "Sensor Values": {"Temperature": asset["lastReportedData"]["tm"], "Humidity": asset["lastReportedData"]["h"], "Pressure": asset["lastReportedData"]["prs"], "Battery": asset["lastReportedData"]["batteryLeft"]},
                         "Last Reported": convert_time("iso", asset["lastReportedAt"]),
                         "Alerts": asset["alerts"],
                     }
@@ -273,8 +274,8 @@ def handle_response(function_name, api_response):
                     {
                         "Device": device["id"],
                         "Device Type": device["deviceType"],
-                        "Asset": None if device["DeviceInfo"] is None else {"Asset Name": device["DeviceInfo"]["TrackedUnit"]["trackingId"], "Tracking Unit": device["DeviceInfo"]["TrackedUnit"]["tuType"]},
-                        "Project": None if device["DeviceInfo"] is None else device["DeviceInfo"]["Project"]["projectName"],
+                        "Asset": {"Asset Name": device["DeviceInfo"]["TrackedUnit"]["trackingId"], "Tracking Unit": device["DeviceInfo"]["TrackedUnit"]["tuType"]} if device["DeviceInfo"] else None,
+                        "Project": device["DeviceInfo"]["Project"]["projectName"] if device["DeviceInfo"] else None,
                         "Status": "Deployed" if device["isActive"] else "In Stock",
                         "Last Modified": convert_time("iso", device["updatedAt"]),
                     }
