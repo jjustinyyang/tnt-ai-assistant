@@ -208,13 +208,8 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_projects",
-                "description": "Return projects based on user-defined parameters.",
-                "parameters": {"type": "object", "properties": {
-                    "limit": {
-                        "type": "string",
-                        "description": "The number of projects to return. E.g. User inputs: 'Show me 10 projects.', then limit = 10.",
-                    }
-                }, "required": []},
+                "description": "Return projects.",
+                "parameters": {"type": "object", "properties": {}, "required": []},
             },
         },
         {

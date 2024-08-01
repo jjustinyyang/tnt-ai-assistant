@@ -240,6 +240,7 @@ def handle_response(function_name, api_response):
                         "Triggered At": convert_time("iso", alert["updatedAt"]),
                     }
                 )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Triggered At"], reverse=True)
         case "get_assets":
             for asset in api_response["assets"]:
                 handled_reponse.append(
@@ -253,6 +254,7 @@ def handle_response(function_name, api_response):
                         "Alerts": asset["alerts"],
                     }
                 )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Last Reported"], reverse=True)
         case "get_asset_sensor_data":
             for sensor_data in api_response:
                 handled_reponse.append(
@@ -264,15 +266,20 @@ def handle_response(function_name, api_response):
                         "Acceleration": {"X": sensor_data["accX"], "Y": sensor_data["accY"], "Z": sensor_data["accZ"]},
                     }
                 )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
         case "get_devices":
             for device in api_response["devices"]:
                 handled_reponse.append(
                     {
-                        "Device ID": device["id"],
+                        "Device": device["id"],
                         "Device Type": device["deviceType"],
-                        "Provisioned Asset": None if device["DeviceInfo"] is None else {"Asset Name": device["DeviceInfo"]["TrackedUnit"]["trackingId"], "Tracking Unit": device["DeviceInfo"]["TrackedUnit"]["tuType"], "Last Reported": convert_time("iso", device["DeviceInfo"]["lastReportedAt"])},
+                        "Asset": None if device["DeviceInfo"] is None else {"Asset Name": device["DeviceInfo"]["TrackedUnit"]["trackingId"], "Tracking Unit": device["DeviceInfo"]["TrackedUnit"]["tuType"]},
+                        "Project": None if device["DeviceInfo"] is None else device["DeviceInfo"]["Project"]["projectName"],
+                        "Status": "Deployed" if device["isActive"] else "In Stock",
+                        "Last Modified": convert_time("iso", device["updatedAt"]),
                     }
                 )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Last Modified"], reverse=True)
         case "get_device_data":
             if api_response["status"] != "SUCCESS":
                 return None
@@ -288,6 +295,7 @@ def handle_response(function_name, api_response):
                         "Events": device_data["evnts"],
                     }
                 )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
         case "get_device_events":
             if api_response["status"] != "SUCCESS":
                 return None
@@ -303,16 +311,16 @@ def handle_response(function_name, api_response):
                         )
             handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
         case "get_projects":
-            for project in api_response["projects"]:
+            for project in api_response:
                 handled_reponse.append(
                     {
                         "Project Name": project["projectName"],
-                        "Short Name": project["shortName"],
-                        "Active": project["isActive"],
-                        "Created At": convert_time("iso", project["createdAt"]),
-                        "Updated At": convert_time("iso", project["updatedAt"]),
+                        "Asset Count": len(project["DeviceInfos"]),
+                        "Location": project["ShippingInfo"]["destinationAddress"]["locality"],
+                        "Last Modified": convert_time("iso", project["updatedAt"]), 
                     }
                 )
+            handled_reponse = sorted(handled_reponse, key=lambda x: x["Last Modified"], reverse=True)
         case _:
             handled_reponse = api_response
     print(handled_reponse)

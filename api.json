@@ -7,7 +7,7 @@
         "get_device_data": "/v2/device/{id}/data",
         "get_device_events": "/device/{id}/eventData",
         "get_devices": "/v2/devices",
-        "get_projects": "/v2/projects",
+        "get_projects": "/v2/projects-lite",
         "get_asset_pdf_report": "/v2/asset/{id}/pdf"
     }
 }
