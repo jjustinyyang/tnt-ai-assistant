@@ -1,6 +1,6 @@
 import json
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 # Load API configuration from a JSON file
 with open("api.json", "r") as f:
@@ -204,29 +204,30 @@ def handle_query(function):
     return id, query
 
 
+import datetime
+
 def convert_time(format, time):
     """
-    Convert the time from epoch or iso format to human-readable format.
+    Convert the time from epoch or ISO format to human-readable format in local time.
 
     Args:
-    - format: The format to convert the time to.
+    - format: The format of the input time ('iso', 'epoch', 'other').
     - time: The time to convert.
 
     Returns:
-    - The converted time.
+    - The converted time as a string.
     """
     match format:
         case "iso":
-            time = datetime.fromisoformat(time.replace("Z", "+00:00"))
+            time = datetime.datetime.fromisoformat(time.replace("Z", "+00:00")).astimezone()
         case "epoch":
-            time = datetime.fromtimestamp(int(time) // 1000)
+            time = datetime.datetime.fromtimestamp(int(time) // 1000)
         case "other":
-            time = datetime.strptime(time.split(".")[0], "%Y-%m-%d %H:%M:%S")
+            time = datetime.datetime.strptime(time.split(".")[0], "%Y-%m-%d %H:%M:%S").astimezone()
         case _:
-            return time
-    offset = timedelta(hours=-7)
-    time = (time + offset).strftime("%Y-%m-%d %H:%M:%S PDT")
-    return time
+            return time  # Returning the original time if the format is unrecognized
+
+    return time.strftime("%Y-%m-%d %H:%M:%S PDT")
 
 
 def handle_response(function_name, api_response):
@@ -248,8 +249,9 @@ def handle_response(function_name, api_response):
     # print(api_response)
     handled_response = []
     match function_name:
-        # specific cases require response handling here
         case "get_alerts":
+            if "response" not in api_response:
+                return None
             for alert in api_response["response"]:
                 handled_response.append(
                     {
@@ -264,6 +266,8 @@ def handle_response(function_name, api_response):
             )
             handled_response.append(api_response["pagination"])
         case "get_assets":
+            if "assets" not in api_response:
+                return None
             for asset in api_response["assets"]:
                 handled_response.append(
                     {
@@ -305,6 +309,8 @@ def handle_response(function_name, api_response):
                 handled_response, key=lambda x: x["Timestamp"], reverse=True
             )
         case "get_devices":
+            if "devices" not in api_response:
+                return None
             for device in api_response["devices"]:
                 handled_response.append(
                     {
@@ -338,6 +344,8 @@ def handle_response(function_name, api_response):
         case "get_device_data":
             if api_response["status"] != "SUCCESS":
                 return None
+            if "response" not in api_response:
+                return None
             for device_data in api_response["response"]:
                 handled_response.append(
                     {
@@ -362,6 +370,8 @@ def handle_response(function_name, api_response):
             )
         case "get_device_events":
             if api_response["status"] != "SUCCESS":
+                return None
+            if "events" not in api_response:
                 return None
             for event, values in api_response["events"].items():
                 if event != "timestamp":
@@ -397,7 +407,7 @@ def handle_response(function_name, api_response):
             )
         case _:
             handled_response = api_response
-    # print(handled_response)
+    print(handled_response)
     return handled_response
 
 
