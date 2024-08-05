@@ -42,13 +42,17 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_alerts",
-                "description": "Return alerts/excursions based on user-defined parameters. Excursions are alerts that are triggered when a sensor value exceeds a certain threshold (E.g. Temperature, Trip Duration, Lifetime Temperature).",
+                "description": "Return alerts/excursions based on user-defined parameters. Excursions are alerts that are triggered when a sensor value exceeds a certain threshold (E.g. Temperature, Trip Duration, Lifetime Temperature). The response includes a pagination support.",
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "The page number of the assets to return.",
+                        },
                         "limit": {
                             "type": "string",
-                            "description": "The number of alerts to return. E.g. User inputs: 'Show me 10 alerts.', then limit = 10.",
+                            "description": "The number of assets per page, default to 50.",
                         },
                         "project": {
                             "type": "string",
@@ -92,13 +96,17 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_assets",
-                "description": "Returns assets based on user-defined parameters.",
+                "description": "Returns assets based on user-defined parameters. The response includes a pagination support.",
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "The page number of the assets to return.",
+                        },
                         "limit": {
                             "type": "string",
-                            "description": "The number of assets to return. E.g. User inputs: 'Show me 10 assets.', then limit = 10.",
+                            "description": "The number of assets per page, default to 50.",
                         },
                         "deviceType": {
                             "type": "string",
@@ -175,13 +183,17 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_devices",
-                "description": "Return devices based on user-defined parameters.",
+                "description": "Return devices based on user-defined parameters. The response includes a pagination support.",
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "The page number of the assets to return.",
+                        },
                         "limit": {
                             "type": "string",
-                            "description": "The number of devices to return. E.g. User inputs: 'Show me 10 devices.', then limit = 10.",
+                            "description": "The number of assets per page, default to 50.",
                         },
                         "deviceType": {
                             "type": "string",

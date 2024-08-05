@@ -9,6 +9,7 @@ with open("api.json", "r") as f:
 
 common_headers = {}
 
+
 def set_common_headers(idToken, xapikey):
     """
     Set common headers for API requests.
@@ -23,6 +24,7 @@ def set_common_headers(idToken, xapikey):
         "Origin": f"{api['base_url']}",
         "x-api-key": xapikey,
     }
+
 
 def login(email, password):
     """
@@ -68,6 +70,7 @@ def get_view_link(asset_id):
     """
     return f"https://app.tagntrac.io/assets/{asset_id}"
 
+
 def download(response):
     """
     Download the content of the response as a PDF file.
@@ -89,6 +92,7 @@ def download(response):
             "Report PDF generation failed, no files available to be downloaded.",
         )
 
+
 def call_tnt_api(function_name, id, query):
     """
     Call the Tag-N-Trac API and return the response.
@@ -101,7 +105,12 @@ def call_tnt_api(function_name, id, query):
     Returns:
     - The API response or None if the call fails.
     """
-    if function_name in ["get_asset_sensor_data", "get_device_data", "get_device_events", "get_asset_pdf_report"]:
+    if function_name in [
+        "get_asset_sensor_data",
+        "get_device_data",
+        "get_device_events",
+        "get_asset_pdf_report",
+    ]:
         if id is None:
             print(f"{function_name} failed with missing endpoint argument: id")
             return None
@@ -119,7 +128,8 @@ def call_tnt_api(function_name, id, query):
     else:
         print(f"{function_name} failed with status code {response.status_code}")
         return None
-    
+
+
 def get_asset_id_by_name(asset_name):
     """
     Get the asset ID by asset name.
@@ -136,6 +146,7 @@ def get_asset_id_by_name(asset_name):
         return asset["assets"][0]["id"]
     else:
         return None
+
 
 def handle_query(function):
     """
@@ -177,14 +188,21 @@ def handle_query(function):
     query = ""
     # special case: get_alerts api has to include blank queries
     if function_name == "get_alerts":
-        query += "?parameter=&condition="
-        query += f"&limit={arguments.get("limit", "")}&project={arguments.get("project", "")}&startDate={arguments.get("startDate", "")}&endDate={arguments.get("endDate", "")}&q={arguments.get("q", "")}"
+        query = "?parameter=&condition="
+        page = arguments.get("page", "")
+        limit = arguments.get("limit", "")
+        proj = arguments.get("project", "")
+        start = arguments.get("startDate", "")
+        end = arguments.get("endDate", "")
+        q = arguments.get("q", "")
+        query += f"&page={page}&limit={limit}&project={proj}&startDate={start}&endDate={end}&q={q}"
     else:
         for key, value in arguments.items():
             if key not in ["asset_name", "device_id", "project_name"]:
-                query += "?" if not query else "&"
+                query += "&" if query else "?"
                 query += f"{key}={value}"
     return id, query
+
 
 def convert_time(format, time):
     """
@@ -203,12 +221,13 @@ def convert_time(format, time):
         case "epoch":
             time = datetime.fromtimestamp(int(time) // 1000)
         case "other":
-            time = datetime.strptime(time.split('.')[0], "%Y-%m-%d %H:%M:%S")
+            time = datetime.strptime(time.split(".")[0], "%Y-%m-%d %H:%M:%S")
         case _:
             return time
     offset = timedelta(hours=-7)
     time = (time + offset).strftime("%Y-%m-%d %H:%M:%S PDT")
     return time
+
 
 def handle_response(function_name, api_response):
     """
@@ -226,13 +245,13 @@ def handle_response(function_name, api_response):
     if api_response is None:
         return None
     api_response = api_response.json()
-    print(api_response)
-    handled_reponse = []
+    # print(api_response)
+    handled_response = []
     match function_name:
         # specific cases require response handling here
         case "get_alerts":
             for alert in api_response["response"]:
-                handled_reponse.append(
+                handled_response.append(
                     {
                         "Asset Name": alert["blegwId"],
                         "Device ID": alert["deviceId"],
@@ -240,92 +259,147 @@ def handle_response(function_name, api_response):
                         "Triggered At": convert_time("iso", alert["updatedAt"]),
                     }
                 )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Triggered At"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Triggered At"], reverse=True
+            )
+            handled_response.append(api_response["pagination"])
         case "get_assets":
             for asset in api_response["assets"]:
-                handled_reponse.append(
+                handled_response.append(
                     {
                         "Asset": asset["TrackedUnit"]["trackingId"],
                         "Tracked Unit": asset["TrackedUnit"]["tuType"],
                         "Device": asset["deviceId"],
                         "Device Type": asset["Device"]["deviceType"],
                         "Project": asset["Project"]["projectName"],
-                        "Sensor Values": {"Temperature": asset["lastReportedData"]["tm"], "Humidity": asset["lastReportedData"]["h"], "Pressure": asset["lastReportedData"]["prs"], "Battery": asset["lastReportedData"]["batteryLeft"]},
+                        "Sensor Values": {
+                            "Temperature": asset["lastReportedData"]["tm"],
+                            "Humidity": asset["lastReportedData"]["h"],
+                            "Pressure": asset["lastReportedData"]["prs"],
+                            "Battery": asset["lastReportedData"]["batteryLeft"],
+                        },
                         "Last Reported": convert_time("iso", asset["lastReportedAt"]),
                         "Alerts": asset["alerts"],
                     }
                 )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Last Reported"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Last Reported"], reverse=True
+            )
+            handled_response.append(api_response["pagination"])
         case "get_asset_sensor_data":
             for sensor_data in api_response:
-                handled_reponse.append(
+                handled_response.append(
                     {
                         "Timestamp": convert_time("epoch", sensor_data["timestamp"]),
                         "Temperature": sensor_data["temperature"],
                         "Humidity": sensor_data["humidity"],
                         "Pressure": sensor_data["pressure"],
-                        "Acceleration": {"X": sensor_data["accX"], "Y": sensor_data["accY"], "Z": sensor_data["accZ"]},
+                        "Acceleration": {
+                            "X": sensor_data["accX"],
+                            "Y": sensor_data["accY"],
+                            "Z": sensor_data["accZ"],
+                        },
                     }
                 )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Timestamp"], reverse=True
+            )
         case "get_devices":
             for device in api_response["devices"]:
-                handled_reponse.append(
+                handled_response.append(
                     {
                         "Device": device["id"],
                         "Device Type": device["deviceType"],
-                        "Asset": {"Asset Name": device["DeviceInfo"]["TrackedUnit"]["trackingId"], "Tracking Unit": device["DeviceInfo"]["TrackedUnit"]["tuType"]} if device["DeviceInfo"] else None,
-                        "Project": device["DeviceInfo"]["Project"]["projectName"] if device["DeviceInfo"] else None,
+                        "Asset": (
+                            {
+                                "Asset Name": device["DeviceInfo"]["TrackedUnit"][
+                                    "trackingId"
+                                ],
+                                "Tracking Unit": device["DeviceInfo"]["TrackedUnit"][
+                                    "tuType"
+                                ],
+                            }
+                            if device["DeviceInfo"]
+                            else None
+                        ),
+                        "Project": (
+                            device["DeviceInfo"]["Project"]["projectName"]
+                            if device["DeviceInfo"]
+                            else None
+                        ),
                         "Status": "Deployed" if device["isActive"] else "In Stock",
                         "Last Modified": convert_time("iso", device["updatedAt"]),
                     }
                 )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Last Modified"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Last Modified"], reverse=True
+            )
+            handled_response.append(api_response["pagination"])
         case "get_device_data":
             if api_response["status"] != "SUCCESS":
                 return None
             for device_data in api_response["response"]:
-                handled_reponse.append(
+                handled_response.append(
                     {
                         "Timestamp": convert_time("epoch", device_data["ts"]),
-                        "Location": {"Latitude": device_data["lat"], "Longitude": device_data["lng"]},
+                        "Location": {
+                            "Latitude": device_data["lat"],
+                            "Longitude": device_data["lng"],
+                        },
                         "Temperature": device_data["tm"],
                         "Humidity": device_data["h"],
                         "Pressure": device_data["prs"],
-                        "Acceleration": {"X": device_data["accX"], "Y": device_data["accY"], "Z": device_data["accZ"]},
+                        "Acceleration": {
+                            "X": device_data["accX"],
+                            "Y": device_data["accY"],
+                            "Z": device_data["accZ"],
+                        },
                         "Events": device_data["evnts"],
                     }
                 )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Timestamp"], reverse=True
+            )
         case "get_device_events":
             if api_response["status"] != "SUCCESS":
                 return None
             for event, values in api_response["events"].items():
                 if event != "timestamp":
-                    time_indices = [index for index, value in enumerate(values) if value]
+                    time_indices = [
+                        index for index, value in enumerate(values) if value
+                    ]
                     for index in time_indices:
-                        handled_reponse.append(
+                        handled_response.append(
                             {
-                                "Timestamp": convert_time("other", api_response["events"]["timestamp"][index]),
+                                "Timestamp": convert_time(
+                                    "other", api_response["events"]["timestamp"][index]
+                                ),
                                 "Event": event,
                             }
                         )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Timestamp"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Timestamp"], reverse=True
+            )
         case "get_projects":
             for project in api_response:
-                handled_reponse.append(
+                handled_response.append(
                     {
                         "Project Name": project["projectName"],
                         "Asset Count": len(project["DeviceInfos"]),
-                        "Location": project["ShippingInfo"]["destinationAddress"]["locality"],
-                        "Last Modified": convert_time("iso", project["updatedAt"]), 
+                        "Location": project["ShippingInfo"]["destinationAddress"][
+                            "locality"
+                        ],
+                        "Last Modified": convert_time("iso", project["updatedAt"]),
                     }
                 )
-            handled_reponse = sorted(handled_reponse, key=lambda x: x["Last Modified"], reverse=True)
+            handled_response = sorted(
+                handled_response, key=lambda x: x["Last Modified"], reverse=True
+            )
         case _:
-            handled_reponse = api_response
-    print(handled_reponse)
-    return handled_reponse
+            handled_response = api_response
+    # print(handled_response)
+    return handled_response
+
 
 def get_function_output(function):
     """
