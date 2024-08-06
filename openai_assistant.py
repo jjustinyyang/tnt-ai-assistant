@@ -33,7 +33,6 @@ assistant = client.beta.assistants.create(
         Rules when responding to the user:
         - If the function outputs nothing (None or null), respond to the user with a message indicating that no data was found.
         - Always respond to the user in markdown format, create tables for tabular data.
-        - If the user asks for a report, indicate to the user to use the download button if the report is generated and ready to be downloaded.
         """,
     model="gpt-4o-mini",
     tools=[
@@ -41,17 +40,13 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_alerts",
-                "description": "Return alerts/excursions based on user-defined parameters. The response includes a pagination support. Continue onto the next pages to search for more alerts.",
+                "description": "Return alerts/excursions information based on user-defined parameters, including: asset name, device ID, types of alerts, and alerts triggered time. The response includes a pagination support, continue onto the next pages to search for more alerts information.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "page": {
                             "type": "string",
                             "description": "The page number of the assets to return.",
-                        },
-                        "limit": {
-                            "type": "string",
-                            "description": "The number of assets per page, default to 50.",
                         },
                         "project": {
                             "type": "string",
@@ -78,7 +73,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_asset_sensor_data",
-                "description": "Return sensor data of an asset given the asset name. E.g. timestamps, temperature (C), pressure (hPa), and acceleration. Adjust the time period to continue search for more data from a bigger time interval.",
+                "description": "Return sensor data of an asset given the asset name, including: timestamps, temperature (C), humidity (%), pressure (hPa), and acceleration. Adjust the time period to continue search for more data from a bigger time interval.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -88,11 +83,11 @@ assistant = client.beta.assistants.create(
                         },
                         "timePeriod": {
                             "type": "string",
-                            "description": "The time period in minutes for which the sensor data is requested. E.g. User inputs: 'Get me sensor data for my asset X for the past day.', then timePeriod = '1440'. User inputs: 'Get me sensor data for my asset X for the past 2 days.', then timePeriod = '2880'.",
+                            "description": "The time period in minutes for which the sensor data is requested, default to 1440. E.g. User inputs: 'Get me sensor data for my asset X for the past day.', then timePeriod = '1440'. User inputs: 'Get me sensor data for my asset X for the past 2 days.', then timePeriod = '2880'.",
                         },
                         "binInterval": {
                             "type": "string",
-                            "description": "The bin interval in minutes for the sensor data to be displayed in. E.g. User inputs: 'Get me sensor data for my asset X in every 15 minutes interval.', then binInterval = '15'.",
+                            "description": "The bin interval in minutes for the sensor data to be displayed in, default to 15.E.g. User inputs: 'Get me sensor data for my asset X in every 15 minutes interval.', then binInterval = '15'.",
                         },
                     },
                     "required": ["asset_name"],
@@ -103,17 +98,13 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_assets",
-                "description": "Returns assets based on user-defined parameters. The response includes a pagination support. Continue onto the next pages to search for more assets.",
+                "description": "Returns assets information based on user-defined parameters, each asset includes information: asset name, tracking unit, device ID, device type, project under, sensor values, last reported, and alert count. The response includes a pagination support, continue onto the next pages to search for more assets information.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "page": {
                             "type": "string",
                             "description": "The page number of the assets to return.",
-                        },
-                        "limit": {
-                            "type": "string",
-                            "description": "The number of assets per page, default to 50.",
                         },
                         "deviceType": {
                             "type": "string",
@@ -148,7 +139,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_device_data",
-                "description": "Return device data based on user-defined parameters.",
+                "description": "Return device data based on user-defined parameters, including: timestamps, location, temperature (C), humidity (%), pressure (hPa), acceleration, and event counts.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -173,7 +164,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_device_events",
-                "description": "Return events of a device based on user-defined parameters. Events such as movement, open, close, short, medium, and shock.",
+                "description": "Return events information of a device based on user-defined parameters, including: timestamps and event titles. Events such as movement, open, close, short, medium, and shock.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -190,17 +181,13 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_devices",
-                "description": "Return devices based on user-defined parameters. The response includes a pagination support. Continue onto the next pages to search for more devices.",
+                "description": "Return devices information based on user-defined parameters, including: device ID, device type, asset it is provisioning, project under, status, and last modified time. The response includes a pagination support. Continue onto the next pages to search for more devices.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "page": {
                             "type": "string",
                             "description": "The page number of the assets to return.",
-                        },
-                        "limit": {
-                            "type": "string",
-                            "description": "The number of assets per page, default to 50.",
                         },
                         "deviceType": {
                             "type": "string",
@@ -227,7 +214,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "get_projects",
-                "description": "Return projects.",
+                "description": "Return projects information, including: project name, asset count, location, and last modified time.",
                 "parameters": {"type": "object", "properties": {}, "required": []},
             },
         },

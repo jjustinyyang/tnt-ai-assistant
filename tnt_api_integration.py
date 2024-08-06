@@ -186,11 +186,13 @@ def handle_query(function):
             print("Get function argument failed: asset name")
 
     query = ""
+    if function_name in ["get_alerts", "get_assets", "get_devices"]:
+        page = arguments.get("page", "")
+        limit = arguments.get("limit", "100")
+        query += f"?page={page}&limit={limit}"
     # special case: get_alerts api has to include blank queries
     if function_name == "get_alerts":
         query = "?parameter=&condition="
-        page = arguments.get("page", "")
-        limit = arguments.get("limit", "")
         proj = arguments.get("project", "")
         start = arguments.get("startDate", "")
         end = arguments.get("endDate", "")
@@ -198,7 +200,7 @@ def handle_query(function):
         query += f"&page={page}&limit={limit}&project={proj}&startDate={start}&endDate={end}&q={q}"
     else:
         for key, value in arguments.items():
-            if key not in ["asset_name", "device_id", "project_name"]:
+            if key not in ["asset_name", "device_id", "project_name", "page", "limit"]:
                 query += "&" if query else "?"
                 query += f"{key}={value}"
     return id, query
